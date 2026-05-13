@@ -1,0 +1,3215 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="STAGE 3D">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#05050c">
+<meta name="description" content="3D舞台ビジュアライザー — 振付・照明プランニングツール">
+<!-- PWA Manifest（inline） -->
+<link rel="manifest" href="data:application/json;charset=utf-8,{
+  &quot;name&quot;: &quot;STAGE 3D v4&quot;,
+  &quot;short_name&quot;: &quot;STAGE 3D&quot;,
+  &quot;description&quot;: &quot;3D舞台ビジュアライザー&quot;,
+  &quot;start_url&quot;: &quot;.&quot;,
+  &quot;display&quot;: &quot;fullscreen&quot;,
+  &quot;orientation&quot;: &quot;landscape&quot;,
+  &quot;background_color&quot;: &quot;#05050c&quot;,
+  &quot;theme_color&quot;: &quot;#05050c&quot;,
+  &quot;icons&quot;: [{
+    &quot;src&quot;: &quot;data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect width='192' height='192' fill='%2305050c'/><text x='96' y='130' font-size='100' text-anchor='middle' fill='%234466ff'>🎭</text></svg>&quot;,
+    &quot;sizes&quot;: &quot;192x192&quot;,
+    &quot;type&quot;: &quot;image/svg+xml&quot;
+  }]
+}">
+<!-- iOS ホーム画面アイコン（SVGインライン） -->
+<link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'><rect width='180' height='180' rx='40' fill='%2305050c'/><text x='90' y='125' font-size='90' text-anchor='middle' fill='%234466ff'>🎭</text><text x='90' y='165' font-size='18' text-anchor='middle' fill='%234466ff' font-family='system-ui'>STAGE 3D</text></svg>">
+<title>STAGE 3D v4</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;overflow:hidden;overscroll-behavior:none;background:#05050c;color:#b8b8d0;font-family:system-ui,'Hiragino Kaku Gothic ProN',sans-serif;font-size:13px}
+/* iOSでbutton要素が確実にタップできるようにリセット */
+button{-webkit-appearance:none;appearance:none;font-family:inherit;font-size:inherit;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:rgba(0,0,0,.1);border:none;background:none;padding:0;margin:0;display:inline-flex;align-items:center;justify-content:center;user-select:none;-webkit-user-select:none;}
+#app{display:flex;height:100vh;position:relative;-webkit-user-select:none;user-select:none}
+
+/* ── PANELS ── */
+#left{width:188px;min-width:188px;background:#09091a;border-right:1px solid #16162a;display:flex;flex-direction:column;overflow:hidden;flex-shrink:0}
+#right{width:220px;min-width:220px;background:#09091a;border-left:1px solid #16162a;overflow-y:auto;display:flex;flex-direction:column;flex-shrink:0}
+#main{flex:1;display:flex;flex-direction:column;min-width:0;overflow:hidden}
+
+/* section headers */
+.ph{padding:4px 8px;font-size:9px;font-weight:700;letter-spacing:1.5px;color:#5555aa;background:#06060f;border-bottom:1px solid #111120;flex-shrink:0;display:flex;align-items:center;gap:4px;text-transform:uppercase}
+.ph-l{flex:1}
+.ph-b{padding:1px 5px;background:#0d0d22;border:1px solid #2a2a5a;color:#6666bb;border-radius:3px;cursor:pointer;font-size:9px;letter-spacing:0;touch-action:manipulation;transition:all .1s}
+.ph-b:hover,.ph-b:active{border-color:#3a4aaa;color:#8888ff}
+.ph-b.del{color:#552222;border-color:#220e0e}
+.ph-b.del:hover{border-color:#884444;color:#ff7777}
+
+/* ── VIEWPORT ── */
+#vp{flex:1;position:relative;min-height:0;overflow:hidden;touch-action:none}
+#vp canvas{display:block;position:absolute;inset:0;width:100%!important;height:100%!important}
+/* iOS用タッチレイヤー: canvasを完全に覆う透明div。これにPointerEventsを登録 */
+#touch-layer{position:absolute;inset:0;z-index:2;touch-action:none;-webkit-tap-highlight-color:transparent}
+#labels{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+.dlbl{position:absolute;transform:translate(-50%,-100%);background:rgba(0,0,10,.94);color:#fff;font-size:10px;padding:1px 6px;border-radius:3px;border-left:2px solid #fff;white-space:nowrap;pointer-events:none}
+.klbl{position:absolute;transform:translate(-50%,2px);color:#5577ee;font-size:9px;padding:1px 5px;background:rgba(0,0,0,.85);border-radius:2px;white-space:nowrap;pointer-events:none;border:1px solid #2233aa44}
+.wlbl{position:absolute;transform:translate(-50%,-50%);color:#667744;font-size:9px;pointer-events:none;font-weight:700;letter-spacing:1px;background:rgba(0,0,0,.6);padding:1px 4px;border-radius:2px}
+#modebar{position:absolute;top:8px;left:50%;transform:translateX(-50%);background:rgba(0,0,14,.92);border:1px solid #2a2a5a;padding:3px 10px;border-radius:12px;font-size:10px;color:#7777bb;pointer-events:none;z-index:5;white-space:nowrap}
+#camrow{position:absolute;top:8px;right:8px;display:flex;gap:3px;z-index:5}
+.cbtn{padding:4px 8px;background:rgba(5,5,15,.92);border:1px solid #1a1a3a;color:#3d3d99;border-radius:4px;cursor:pointer;font-size:10px;touch-action:manipulation;min-height:32px}
+.cbtn:hover,.cbtn:active{background:#0f0f28;color:#aaaaff}
+#movetip{display:none;position:absolute;bottom:10px;left:50%;transform:translateX(-50%);background:rgba(10,20,120,.94);border:1px solid #2244cc;padding:5px 16px;border-radius:12px;font-size:11px;color:#88aaff;z-index:10;pointer-events:none}
+/* Mobile panel toggles */
+#mobbtn{display:none;position:absolute;top:8px;left:8px;z-index:20;gap:3px}
+.mbb{padding:5px 9px;background:rgba(5,5,18,.92);border:1px solid #1a1a3c;color:#4444aa;border-radius:5px;cursor:pointer;font-size:11px;touch-action:manipulation;min-height:36px;min-width:36px;display:flex;align-items:center;justify-content:center}
+
+/* ── AUDIO ── */
+#audiobar{height:38px;background:#030308;border-top:1px solid #10101e;display:flex;align-items:center;gap:5px;padding:0 7px;flex-shrink:0}
+#audioname{font-size:10px;color:#7777aa;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+#waveform{flex:2;height:26px;background:#03030a;border:1px solid #101020;border-radius:3px;position:relative;cursor:pointer;overflow:hidden;min-width:40px}
+#waveprog{position:absolute;top:0;left:0;height:100%;background:rgba(30,50,200,.28);pointer-events:none}
+.abtn{padding:4px 8px;background:#0a0a1c;border:1px solid #181830;color:#38388a;border-radius:3px;cursor:pointer;font-size:10px;white-space:nowrap;flex-shrink:0;touch-action:manipulation;min-height:28px}
+.abtn:hover,.abtn:active{border-color:#3344aa;color:#8899ff}
+audio{display:none}
+
+/* ── TIMELINE ── */
+#tl{height:210px;background:#03030a;border-top:1px solid #10101e;padding:5px 8px;display:flex;flex-direction:column;gap:3px;flex-shrink:0}
+#tlrow{display:flex;align-items:center;gap:5px;flex-wrap:wrap}
+#timedsp{font-family:monospace;font-size:17px;color:#6688ff;min-width:44px;flex-shrink:0}
+#plybtn{padding:4px 10px;background:#0c1248;border:1px solid #2030a0;color:#8899ff;border-radius:4px;cursor:pointer;font-size:12px;flex-shrink:0;touch-action:manipulation;min-height:30px}
+#plybtn:hover,#plybtn:active{background:#141a80;color:#ccddff}
+.tc{display:flex;align-items:center;gap:3px;font-size:10px;color:#8888bb}
+.tc input{width:42px;background:#05050e;border:1px solid #252540;color:#9999cc;border-radius:3px;padding:2px 4px;font-size:10px}
+.tlbtn{padding:3px 7px;background:#060618;border:1px solid #252540;color:#7777aa;border-radius:3px;cursor:pointer;font-size:10px;flex-shrink:0;touch-action:manipulation;min-height:26px;transition:all .1s}
+.tlbtn:hover,.tlbtn:active{border-color:#3d47aa;color:#ccccff}
+.tlbtn.kf{color:#ffaa33;border-color:#503010}
+#ruler{position:relative;height:12px;flex-shrink:0}
+.rtick{position:absolute;bottom:0;font-size:9px;color:#6666aa;transform:translateX(-50%)}
+.rtick::before{content:'';position:absolute;top:0;left:50%;width:1px;height:5px;background:#141428}
+#scrub{position:relative;height:40px;background:#030308;border:1px solid #101020;border-radius:4px;cursor:pointer;flex-shrink:0;touch-action:none}
+#prog{position:absolute;top:0;left:0;height:100%;background:#07071c;border-radius:4px;pointer-events:none}
+#head{position:absolute;top:50%;width:13px;height:13px;background:#2233ee;border-radius:50%;transform:translate(-50%,-50%);border:2px solid #3344ff;box-shadow:0 0 5px #2233ee55;touch-action:none}
+#kflayer{position:absolute;inset:0;pointer-events:none}
+.km{position:absolute;top:30%;width:10px;height:10px;transform:translate(-50%,-50%) rotate(45deg);cursor:pointer;pointer-events:all;touch-action:manipulation;filter:drop-shadow(0 1px 2px rgba(0,0,0,.7))}
+.kml{top:75%;width:6px;height:6px}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+/* 2段の区切り線 */
+#scrub::after{content:'';position:absolute;top:52%;left:0;width:100%;height:1px;background:#1a1a2e;pointer-events:none}
+
+/* ── LEFT PANEL ── */
+#proj-area{padding:5px 6px;border-bottom:1px solid #0e0e1c;flex-shrink:0}
+.pi{width:100%;background:#04040e;border:1px solid #131328;color:#8888b8;border-radius:3px;padding:3px 6px;font-size:11px;margin-bottom:3px;-webkit-user-select:text;user-select:text}
+.pi:focus{outline:none;border-color:#2a3aaa;background:#080818;color:#ccccff}
+#work-list{max-height:130px;overflow-y:auto;margin-bottom:3px;border:1px solid #1a1a2c;border-radius:4px;background:#050510}
+.pw{padding:3px 6px;font-size:10px;color:#30307a;cursor:pointer;border-radius:2px;display:flex;align-items:center;gap:4px;touch-action:manipulation;min-height:22px}
+.pw:hover{background:#0d0d22;color:#7788cc}
+.pw.sel{background:#0c0c34;color:#6688ff}
+.pw-name{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pw-del{font-size:9px;opacity:0;color:#883333;padding:0 2px}
+.pw:hover .pw-del{opacity:1}
+.pbtns{display:flex;gap:3px;padding:3px 5px;flex-shrink:0}
+.pb{flex:1;padding:4px 2px;background:#0b0b1c;border:1px solid #181830;color:#44447a;border-radius:3px;cursor:pointer;font-size:10px;text-align:center;touch-action:manipulation;transition:all .1s;min-height:26px}
+.pb:hover,.pb:active{background:#121230;border-color:#3a4aaa;color:#aaaaff}
+.pb.red:hover,.pb.red:active{background:#1e0808;border-color:#552222;color:#ff8888}
+/* DANCER LIST - key: no re-render on select */
+#dancer-list{flex:1;overflow-y:auto;padding:3px}
+.di{display:flex;align-items:center;gap:4px;padding:4px 5px;border-radius:3px;margin-bottom:2px;border:1px solid transparent;cursor:pointer;touch-action:manipulation;min-height:30px}
+.di:hover{background:#0c0c1e}
+.di.sel{background:#0c0c2e;border-color:#22286a}
+.dc{width:10px;height:10px;border-radius:50%;flex-shrink:0;cursor:pointer;border:1px solid transparent}
+.dc:hover{border-color:#fff8}
+/* Name input — key fix: allow text selection and focus */
+.dname{font-size:11px;flex:1;background:transparent;border:none;color:#8888b8;padding:0 2px;min-width:0;cursor:pointer;width:100%;-webkit-user-select:text;user-select:text}
+.dname:focus{background:rgba(255,255,255,.08);color:#ffffff;border-radius:2px;cursor:text;outline:none;padding:0 3px}
+/* Light mode override for inputs */
+/* ── ライトモード: ステージ以外を明るく ── */
+body.light-panel #left,body.light-panel #right{background:#f0f0f8;color:#111}
+body.light-panel .ph{background:#e0e0ee;color:#223;border-color:#bbb}
+body.light-panel .pi,body.light-panel .dname{background:#fff;color:#111;border-color:#aaa}
+body.light-panel .dname-edit{background:#fff;color:#111}
+body.light-panel .dname-edit:focus{background:#fffff0;color:#000}
+body.light-panel .di{color:#111;background:#f8f8ff}
+body.light-panel .di.sel{background:#ddeeff;border-color:#2255cc}
+body.light-panel .pb,body.light-panel .ph-b{background:#e8e8ff;color:#334;border-color:#99a}
+body.light-panel .ph-b:hover{border-color:#3a4aaa;color:#1133aa}
+body.light-panel .pw{color:#334}
+body.light-panel .pw.sel{background:#ddeeff;color:#1133aa}
+/* 音楽バー */
+body.light-panel #audiobar{background:#fffcee;border-color:#ddbb44}
+body.light-panel #audioname{color:#664400}
+body.light-panel #waveform{background:#fff8dd;border-color:#ddbb44}
+body.light-panel .abtn{background:#fff;border-color:#aaa;color:#334}
+/* タイムライン全体 */
+body.light-panel #tl{background:#f4f4fc;border-top-color:#ccc}
+body.light-panel #tlrow{color:#223}
+body.light-panel .tc{color:#334}
+body.light-panel .tc input{background:#fff;border-color:#aaa;color:#111}
+body.light-panel .tlbtn{background:#fff;border-color:#aaa;color:#334}
+body.light-panel .tlbtn.kf{color:#cc7700;border-color:#cc7700;background:#fffaee}
+body.light-panel .rtick{color:#556}
+body.light-panel .rtick::before{background:#aaa}
+/* スクラブバー */
+body.light-panel #scrub-pos{background:#e8e8f8;border-color:#aaa}
+body.light-panel #prog-pos{background:#c8c8e8}
+body.light-panel #head{background:#2244dd;border-color:#fff;box-shadow:0 0 5px #2244dd88}
+body.light-panel #scrub-lt{background:#f8f4e8;border-color:#ddbb44}
+/* KFマーカー文字色 */
+body.light-panel #timedsp{color:#1133cc}
+body.light-panel #plybtn{background:#e8eeff;border-color:#3355cc;color:#1133aa}
+/* ボトムパネル */
+body.light-panel #bottom,body.light-panel #dashbox{background:#f0f0f8}
+body.light-panel .dcard{background:#e8e8f8;border-color:#ccc}
+body.light-panel .dct{color:#446}
+body.light-panel .dcv{color:#1133aa}
+body.light-panel .dcs{color:#446}
+body.light-panel .sb{background:#f8f8ff;border-color:#aab;color:#446}
+body.light-panel .sb.on{background:#fff8e0;border-color:#cc8800;color:#885500}
+body.light-panel .ltb{background:#fff;border-color:#aaa;color:#334}
+body.light-panel .ltb.on{background:#ddeeff;border-color:#2244cc;color:#1133aa}
+body.light-panel .ltb.on-y{background:#fff8e0;border-color:#cc8800;color:#885500}
+body.light-panel .irow span{color:#446}
+body.light-panel .ival{color:#2244cc}
+body.light-panel .rl{color:#446}
+body.light-panel .ri{background:#fff;border-color:#aaa;color:#111}
+body.light-panel .rs{border-color:#ddd}
+body.light-panel #proparea{color:#334}
+/* ステージは常に暗いまま */
+body.light-panel #vp,body.light-panel #canvaswrap{background:#04040c !important}
+.dvis{font-size:11px;color:#1c1c30;cursor:pointer;padding:1px 3px;flex-shrink:0;touch-action:manipulation;min-width:20px;text-align:center}
+.dvis:hover,.dvis:active{color:#888}
+/* Wing badge */
+.wing-badge{font-size:8px;padding:1px 3px;background:#1a1a10;border:1px solid #333320;border-radius:2px;color:#444430;margin-left:2px;flex-shrink:0}
+.wing-badge.in-wing{background:#111a00;border-color:#334400;color:#778833}
+
+/* ── RIGHT PANEL ── */
+.rs{padding:5px 8px;border-bottom:1px solid #0c0c18}
+.rl{font-size:9px;color:#7777aa;display:block;margin-bottom:2px;letter-spacing:.4px}
+.ri{width:100%;background:#04040e;border:1px solid #131328;color:#8888b8;border-radius:3px;padding:3px 6px;font-size:11px;-webkit-user-select:text;user-select:text}
+.ri:focus{outline:none;border-color:#2a3aaa;background:#080818;color:#fff}
+input[type=color].ri{padding:1px;height:22px;cursor:pointer}
+
+/* Light toggle button */
+.ltb{padding:4px 6px;background:#060616;border:1px solid #252548;color:#6666aa;border-radius:3px;cursor:pointer;font-size:10px;text-align:center;touch-action:manipulation;transition:all .12s;white-space:nowrap;min-height:28px;display:flex;align-items:center;justify-content:center}
+.ltb:hover,.ltb:active{background:#0c0c28;border-color:#4444aa;color:#aabbff}
+.ltb.on{background:#0c1840;border-color:#2848cc;color:#88aaff;font-weight:600}
+.ltb.on-y{background:#151200;border-color:#887000;color:#ffcc33;font-weight:600}
+.ltb.on-o{background:#180c00;border-color:#884400;color:#ff8822;font-weight:600}
+.ltgrid{display:grid;gap:3px;margin-top:3px}
+/* intensity row */
+.irow{display:flex;align-items:center;gap:5px;margin-top:4px}
+.irow span{font-size:9px;color:#8888bb;white-space:nowrap}
+.irow input[type=range]{flex:1;height:4px}
+.ival{font-family:monospace;font-size:10px;color:#7788ee;min-width:32px;text-align:right}
+/* color presets */
+.pcols{display:flex;gap:2px;flex-wrap:wrap;margin-top:4px}
+.pcp{width:22px;height:14px;border-radius:2px;cursor:pointer;border:2px solid transparent;touch-action:manipulation}
+.pcp:hover,.pcp:active{border-color:#fff7}
+.pcp.sel{border-color:#fffc}
+/* dashboard cards */
+#dashbox{padding:5px 8px;display:flex;flex-direction:column;gap:4px}
+.dcard{background:#07071a;border:1px solid #1e1e38;border-radius:4px;padding:4px 7px}
+.dct{font-size:9px;color:#6666aa;letter-spacing:.5px;text-transform:uppercase;margin-bottom:2px}
+.dcv{font-size:12px;color:#9999dd}
+.dcs{font-size:9px;color:#6666aa;margin-top:1px}
+/* sus grid */
+#susgrid{display:grid;gap:2px;padding:4px 7px}
+.sb{height:28px;background:#050514;border:1px solid #252540;border-radius:3px;cursor:pointer;font-size:8px;color:#6666aa;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;touch-action:manipulation;transition:all .12s}
+.sb.on{background:#151000;border-color:#664400;color:#ffaa22}
+/* save modal */
+#smodal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:100;align-items:center;justify-content:center}
+#smodal.show{display:flex}
+.smbox{background:#0c0c22;border:1px solid #28285a;border-radius:8px;padding:18px 20px;width:290px;max-width:90vw}
+.smbox h3{font-size:13px;color:#9999cc;margin-bottom:8px}
+.smbox p{font-size:11px;color:#33335a;line-height:1.6;margin-bottom:10px}
+.smb{padding:9px 12px;background:#0e0e28;border:1px solid #22226a;color:#7788cc;border-radius:4px;cursor:pointer;font-size:11px;text-align:left;display:block;width:100%;margin-bottom:6px;touch-action:manipulation}
+.smb:hover,.smb:active{background:#141444;border-color:#3a3a99;color:#ccddff}
+.smb-sub{font-size:9px;color:#2a2a4a;margin-top:2px}
+.smb.cancel{background:#08081a;color:#333366;border-color:#111128}
+
+@media(max-width:680px){
+  #left{position:absolute;left:0;top:0;height:100%;z-index:30;transform:translateX(-100%);transition:transform .2s}
+  #left.open{transform:translateX(0);box-shadow:4px 0 20px rgba(0,0,0,.8)}
+  #right{position:absolute;right:0;top:0;height:100%;z-index:30;transform:translateX(100%);transition:transform .2s}
+  #right.open{transform:translateX(0);box-shadow:-4px 0 20px rgba(0,0,0,.8)}
+  #mobbtn{display:flex!important}
+  #camrow{top:auto;bottom:160px;right:8px}
+  .cbtn{min-height:38px;min-width:44px;font-size:11px}
+}
+</style>
+</head>
+<body>
+<div id="app">
+
+<!-- ══ LEFT ══ -->
+<div id="left">
+  <div class="ph">
+    <span class="ph-l">📁 プロジェクト</span>
+    <span class="ph-b" onclick="toggleStageBright()" id="brightbtn" title="ステージを明るく（作業用）">💡 作業灯</span>
+    <span class="ph-b" onclick="toggleLightMode()" id="modetog" title="パネルを明るく">☀ 明</span>
+    <span class="ph-b" onclick="newStage()" style="color:#ff4444" title="新規ステージ（全データ初期化）">🆕 新規</span>
+  </div>
+  <div id="proj-area">
+    <input class="pi" id="projname" placeholder="プロジェクト名">
+    <input class="pi" id="workname" placeholder="作品名">
+    <div id="work-list"></div>
+    <div class="pbtns">
+      <button class="pb" onclick="askSave()">保存</button>
+      <button class="pb" onclick="importJ()">読込</button>
+      <button class="pb red" onclick="delWork()">削除</button>
+    </div>
+  </div>
+  <div class="ph">
+    <span class="ph-l">🧑 ダンサー</span>
+    <span class="ph-b" onclick="addDancer()">＋</span>
+    <span class="ph-b del" onclick="removeSel()">－</span>
+  </div>
+  <div id="dancer-list"></div>
+  <div class="ph" style="margin-top:auto">
+    <span class="ph-l">🎭 袖（待機スペース）</span>
+    <span class="ph-b" id="wingtog" onclick="toggleWing()">表示</span>
+  </div>
+</div>
+
+<!-- ══ MAIN ══ -->
+<div id="main">
+  <div id="vp">
+    <canvas id="c3"></canvas>
+    <!-- iOS用タッチレイヤー: canvasの上に被せてPointer Eventsを確実に取得 -->
+    <div id="touch-layer"></div>
+    <div id="labels"></div>
+    <div id="modebar">人をドラッグして移動　空きエリアドラッグで回転　ピンチでズーム</div>
+    <div id="camrow">
+      <button class="cbtn" onclick="setView('front')" ontouchend="setView('front');event.preventDefault()">正面</button>
+      <button class="cbtn" onclick="setView('top')" ontouchend="setView('top');event.preventDefault()">真上</button>
+      <button class="cbtn" onclick="setView('side')" ontouchend="setView('side');event.preventDefault()">側面</button>
+      <button class="cbtn" onclick="zoomStep(-1)" ontouchend="zoomStep(-1);event.preventDefault()" style="font-size:15px;padding:3px 8px" title="ズームイン">＋</button>
+      <button class="cbtn" onclick="zoomStep(1)"  ontouchend="zoomStep(1);event.preventDefault()"  style="font-size:15px;padding:3px 8px" title="ズームアウト">－</button>
+      <button class="cbtn" id="lockbtn" onclick="toggleLock()" ontouchend="toggleLock();event.preventDefault()" style="border-color:#553311;color:#aa6622">🔓 固定</button>
+      <button class="cbtn" onclick="toggleFullscreen()" id="fsbtn" title="全画面">⛶</button>
+    </div>
+    <div id="movetip">ステージ or 袖をタップして移動</div>
+    <div id="mobbtn">
+      <div class="mbb" onclick="togglePanel('left')">☰</div>
+      <div class="mbb" onclick="togglePanel('right')">⚙</div>
+    </div>
+  </div>
+  <div id="audiobar">
+    <span style="font-size:13px;flex-shrink:0">🎵</span>
+    <span id="audioname">音楽ファイルを選択してください</span>
+    <div id="waveform" onclick="waveSeek(event)">
+      <div id="waveprog"></div>
+      <canvas id="wc" height="26"></canvas>
+    </div>
+    <div class="abtn" onclick="document.getElementById('af').click()">選択</div>
+  </div>
+  <input type="file" id="af" accept="audio/*" style="display:none" onchange="loadAudio(this)">
+  <input type="file" id="jf" accept=".json" style="display:none" onchange="onJsonFile(this)">
+  <audio id="aud"></audio>
+  <div id="tl">
+    <!-- 共通コントロール -->
+    <div id="tlrow">
+      <span id="timedsp">0:00.0</span>
+      <button id="plybtn" onclick="togglePlay()" ontouchend="togglePlay();event.preventDefault()">▶ 再生</button>
+      <div class="tc">尺<input type="number" id="dur" value="180" min="10" max="600" onchange="ST.dur=+this.value||180;renderTL()">秒</div>
+      <div class="tc" style="gap:3px">
+        <span style="font-size:9px;color:#33335a">🔍</span>
+        <input type="range" id="tlzoom" min="1" max="10" value="1" step="0.5"
+          style="width:60px" oninput="tlZoom=+this.value;renderTL()"
+          title="タイムラインズーム">
+        <span style="font-size:9px;color:#33335a" id="tlzoomv">×1</span>
+      </div>
+      <button class="tlbtn" onclick="confirmResetKF()" style="margin-left:auto;color:#ff4444;border-color:#661111" title="全KFをリセット">⚠ KFリセット</button>
+    </div>
+    <div id="ruler"></div>
+
+    <!-- 上段：ダンサー立ち位置KF -->
+    <div style="display:flex;align-items:center;gap:4px">
+      <span style="font-size:9px;color:#7777aa;min-width:28px;font-weight:700;letter-spacing:.5px">位置</span>
+      <button class="tlbtn kf" onclick="addKF()">◆ KF追加</button>
+      <button class="tlbtn" onclick="delKF()">削除</button>
+      <button class="tlbtn" onclick="copyKFSnapshot()" style="color:#33cc88;border-color:#104430">⧉ コピー</button>
+      <button class="tlbtn" id="kfpastebtn" onclick="pasteKFSnapshot()" style="color:#3388ff;border-color:#102240;opacity:0.4;pointer-events:none">⧉ 貼付</button>
+      <button class="tlbtn" onclick="resetAllKF()" style="color:#ff4444;border-color:#441111;margin-left:auto" title="立ち位置KFをリセット">🗑 位置リセット</button>
+    </div>
+    <div id="scrub-pos" style="position:relative;height:42px;background:#03030a;border:1px solid #101020;border-radius:4px;cursor:crosshair;touch-action:none;flex-shrink:0">
+      <div id="prog-pos" style="position:absolute;top:0;left:0;height:100%;background:#07071c;border-radius:4px;pointer-events:none"></div>
+      <div id="kflayer-pos" style="position:absolute;inset:0;pointer-events:none"></div>
+      <div id="head" style="position:absolute;top:50%;width:14px;height:14px;background:#2233ee;border-radius:50%;transform:translate(-50%,-50%);border:2px solid #3344ff;box-shadow:0 0 6px #2233ee88;touch-action:none"></div>
+    </div>
+
+    <!-- 下段：照明KF -->
+    <div style="display:flex;align-items:center;gap:4px">
+      <span style="font-size:9px;color:#ffaa33;min-width:28px;font-weight:700;letter-spacing:.5px">照明</span>
+      <button class="tlbtn" id="lrec-btn" onclick="toggleLightRec()"
+        style="color:#ff4444;border-color:#661111;font-weight:700;min-width:80px;text-align:center"
+        title="ONにすると照明操作がKFとして記録される">
+        ⚫ 記録OFF
+      </button>
+      <button class="tlbtn" onclick="addLightKF()" style="color:#ffaa33;border-color:#553310">💡 今の状態を記録</button>
+      <button class="tlbtn" onclick="delLightKFAtCurrent()" style="color:#ff7733;border-color:#441a00">削除</button>
+      <button class="tlbtn" onclick="copyLightKF()" style="color:#ffcc44;border-color:#554400">💡 コピー</button>
+      <button class="tlbtn" id="lpastebtn" onclick="pasteLightKF()" style="color:#ffaa22;border-color:#553300;opacity:0.4;pointer-events:none">💡 貼付</button>
+      <button class="tlbtn" onclick="resetLightKF()" style="color:#ff6622;border-color:#441100;margin-left:auto">🗑 照明リセット</button>
+    </div>
+    <div id="scrub-lt" style="position:relative;height:34px;background:#030308;border:1px solid #201808;border-radius:4px;cursor:crosshair;touch-action:none;flex-shrink:0">
+      <div id="kflayer-lt" style="position:absolute;inset:0;pointer-events:none"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ RIGHT ══ -->
+<div id="right">
+
+  <!-- DASHBOARD -->
+  <div class="ph"><span class="ph-l">📊 状態</span></div>
+  <div id="dashbox">
+    <div class="dcard"><div class="dct">操作中</div><div class="dcv" id="d-name">—</div><div class="dcs" id="d-pos">未選択</div></div>
+    <div class="dcard"><div class="dct">照明ON</div><div class="dcv" id="d-lights">なし</div></div>
+    <div class="dcard"><div class="dct">ステージ</div><div class="dcv" id="d-stage">12 × 8 m</div></div>
+  </div>
+
+  <!-- SUS GRID -->
+  <div class="ph"><span class="ph-l">💡 頭上サス</span></div>
+  <div class="rs" style="display:flex;align-items:center;gap:3px;flex-wrap:wrap">
+    <span class="rl" style="margin:0">行</span>
+    <input type="number" class="ri" id="sr" value="5" min="1" max="6" style="width:32px" onchange="rebuildSus()">
+    <span class="rl" style="margin:0">列</span>
+    <input type="number" class="ri" id="sc" value="7" min="1" max="8" style="width:32px" onchange="rebuildSus()">
+    <input type="color" id="susCol" value="#ffbb44" style="width:28px;height:22px;padding:1px;border:1px solid #1a1a30;border-radius:3px;cursor:pointer" title="サス色" onchange="syncSusMeshes()">
+  </div>
+  <!-- 全ON/OFF -->
+  <div style="display:flex;gap:4px;padding:4px 8px">
+    <button class="ltb" onclick="susAllOn()" style="flex:1;color:#ffcc33;border-color:#554400">⬛ 全灯ON</button>
+    <button class="ltb" onclick="susFullOut()" style="flex:1;color:#ff4422;border-color:#441100">⬛ 全灯OFF</button>
+  </div>
+  <!-- ラインサスパターン選択 -->
+  <div class="irow" style="flex-wrap:wrap;gap:3px;padding:3px 8px 2px">
+    <span style="font-size:9px;color:#33335a;width:100%;margin-bottom:2px">💡 ラインサス</span>
+    <button class="ltb on" onclick="susPat('kamite')"  style="font-size:9px;padding:2px 5px;flex:1" title="上手側（右半分）">上手</button>
+    <button class="ltb on" onclick="susPat('shimote')" style="font-size:9px;padding:2px 5px;flex:1" title="下手側（左半分）">下手</button>
+    <button class="ltb on" onclick="susPat('center')"  style="font-size:9px;padding:2px 5px;flex:1" title="センター列">中央</button>
+    <button class="ltb on" onclick="susPat('front')"   style="font-size:9px;padding:2px 5px;flex:1" title="前方行（客席側）">前</button>
+    <button class="ltb on" onclick="susPat('back')"    style="font-size:9px;padding:2px 5px;flex:1" title="後方行（バック側）">奥</button>
+    <button class="ltb on" onclick="susPat('diagL')"   style="font-size:9px;padding:2px 5px;flex:1" title="斜め（上手→奥）">╲</button>
+    <button class="ltb on" onclick="susPat('diagR')"   style="font-size:9px;padding:2px 5px;flex:1" title="斜め（下手→奥）">╱</button>
+    <button class="ltb on" onclick="susPat('checker')" style="font-size:9px;padding:2px 5px;flex:1" title="千鳥格子">⊞</button>
+  </div>
+  <!-- 行ごとON/OFF -->
+  <div id="sus-rows-ui" style="padding:2px 8px 3px;display:flex;gap:3px;flex-wrap:wrap"></div>
+  <!-- フェード -->
+  <div class="irow" style="padding:0 8px 3px">
+    <span>イン</span>
+    <input type="range" id="sus-fadein" min="0" max="5" step="0.5" value="0" oninput="onSusFadeInChange(+this.value)">
+    <span class="ival" id="sus-fadeinv">0s</span>
+  </div>
+  <div class="irow" style="padding:0 8px 5px">
+    <span>アウト</span>
+    <input type="range" id="sus-fadeout" min="0" max="5" step="0.5" value="0" oninput="onSusFadeOutChange(+this.value)">
+    <span class="ival" id="sus-fadeoutv">0s</span>
+  </div>
+  <!-- バックサスA 上手/下手 -->
+  <div class="ph" style="margin-top:2px"><span class="ph-l" style="font-size:9px">🔦 バックサス 上手/下手</span></div>
+  <div style="display:flex;gap:3px;padding:3px 8px 5px;flex-wrap:wrap">
+    <button class="ltb" onclick="backSusSide('A','kamite')" style="flex:1;font-size:9px">A 上手</button>
+    <button class="ltb" onclick="backSusSide('A','shimote')" style="flex:1;font-size:9px">A 下手</button>
+    <button class="ltb" onclick="backSusSide('B','kamite')" style="flex:1;font-size:9px">B 上手</button>
+    <button class="ltb" onclick="backSusSide('B','shimote')" style="flex:1;font-size:9px">B 下手</button>
+  </div>
+  <div id="susgrid"></div>
+
+  <!-- BACK SUS -->
+  <div class="ph"><span class="ph-l">🔦 バックサス A — パラレル</span></div>
+  <div class="rs">
+    <div style="font-size:9px;color:#7777aa;margin-bottom:3px">6灯 後方天井バー → ステージ前方へ平行照射</div>
+    <div class="ltgrid" style="grid-template-columns:1fr">
+      <button class="ltb" id="lt-backSus" onclick="ltToggle('backSus')">OFF</button>
+    </div>
+    <div class="pcols" id="bspcols"></div>
+    <div class="irow">
+      <span>色 A</span>
+      <input type="color" id="bs-col" value="#ffffff"
+        style="width:40px;height:24px;border:2px solid #443322;border-radius:4px;cursor:pointer;padding:1px"
+        onchange="onLCol('backSus',this.value)">
+      <span style="font-size:9px;color:#33335a">バックサスA専用</span>
+      <span>強さ</span><input type="range" id="bs-int" min="0" max="100" value="60" oninput="onLInt('backSus',+this.value)">
+      <span class="ival" id="bs-intv">60%</span>
+    </div>
+    <div class="irow">
+      <span>イン</span><input type="range" id="bs-fadein" min="0" max="5" step="0.5" value="0" oninput="LS.backSus.fadeIn=+this.value;document.getElementById('bs-fadeinv').textContent=this.value+'s'">
+      <span class="ival" id="bs-fadeinv">0s</span>
+    </div>
+    <div class="irow">
+      <span>アウト</span><input type="range" id="bs-fadeout" min="0" max="5" step="0.5" value="0" oninput="LS.backSus.fadeOut=+this.value;document.getElementById('bs-fadeoutv').textContent=this.value+'s'">
+      <span class="ival" id="bs-fadeoutv">0s</span>
+    </div>
+  </div>
+  <div class="ph"><span class="ph-l">🔦 バックサス B — クロス</span></div>
+  <div class="rs">
+    <div style="font-size:9px;color:#7777aa;margin-bottom:3px">6灯 X字交差 — 2色目に最適</div>
+    <div class="ltgrid" style="grid-template-columns:1fr">
+      <button class="ltb" id="lt-backSusB" onclick="ltToggle('backSusB')">OFF</button>
+    </div>
+    <div class="pcols" id="bsbpcols"></div>
+    <div class="irow">
+      <span>色 B</span>
+      <input type="color" id="bsb-col" value="#4488ff"
+        style="width:40px;height:24px;border:2px solid #223355;border-radius:4px;cursor:pointer;padding:1px"
+        onchange="onLCol('backSusB',this.value)">
+      <span style="font-size:9px;color:#33335a">バックサスB専用</span>
+      <span>強さ</span><input type="range" id="bsb-int" min="0" max="100" value="60" oninput="onLInt('backSusB',+this.value)">
+      <span class="ival" id="bsb-intv">60%</span>
+    </div>
+    <div class="irow">
+      <span>イン</span><input type="range" id="bsb-fadein" min="0" max="5" step="0.5" value="0" oninput="LS.backSusB.fadeIn=+this.value;document.getElementById('bsb-fadeinv').textContent=this.value+'s'">
+      <span class="ival" id="bsb-fadeinv">0s</span>
+    </div>
+    <div class="irow">
+      <span>アウト</span><input type="range" id="bsb-fadeout" min="0" max="5" step="0.5" value="0" oninput="LS.backSusB.fadeOut=+this.value;document.getElementById('bsb-fadeoutv').textContent=this.value+'s'">
+      <span class="ival" id="bsb-fadeoutv">0s</span>
+    </div>
+  </div>
+
+  <!-- BACK FOOT -->
+  <div class="ph"><span class="ph-l">💥 バックフット（目潰し）</span></div>
+  <div class="rs">
+    <div style="font-size:9px;color:#7777aa;margin-bottom:3px">後方床置き → 客席方向へ照射</div>
+    <div class="ltgrid" style="grid-template-columns:1fr">
+      <button class="ltb" id="lt-backFoot" onclick="ltToggle('backFoot')">OFF</button>
+    </div>
+    <div class="pcols" id="bfpcols"></div>
+    <div class="irow">
+      <span>色</span><input type="color" id="bf-col" value="#ffffff" style="width:26px;height:18px;border:none;cursor:pointer;padding:0" onchange="onLCol('backFoot',this.value)">
+      <span>強さ</span><input type="range" id="bf-int" min="0" max="100" value="70" oninput="onLInt('backFoot',+this.value)">
+      <span class="ival" id="bf-intv">70%</span>
+    </div>
+    <div class="irow">
+      <span>フェード</span><input type="range" id="bf-fade" min="0" max="5" step="0.5" value="0" oninput="onLFade('backFoot',+this.value)">
+      <span class="ival" id="bf-fadev">0s</span>
+    </div>
+  </div>
+
+  <!-- FRONT (FOH) -->
+  <div class="ph"><span class="ph-l">🎯 フロント照明</span></div>
+  <div class="rs">
+    <div style="font-size:9px;color:#7777aa;margin-bottom:3px">客席上方からステージを照らす</div>
+    <div class="ltgrid" style="grid-template-columns:1fr 1fr">
+      <button class="ltb" id="lt-fohUp" onclick="ltToggle('fohUp')">上段 OFF</button>
+      <button class="ltb" id="lt-fohLo" onclick="ltToggle('fohLo')">下段 OFF</button>
+    </div>
+    <div class="pcols" id="fohpcols"></div>
+    <div class="irow">
+      <span>色</span><input type="color" id="foh-col" value="#ffffff" style="width:26px;height:18px;border:none;cursor:pointer;padding:0" onchange="onLColGroup(['fohUp','fohLo'],this.value)">
+      <span>強さ</span><input type="range" id="foh-int" min="0" max="100" value="55" oninput="onLIntGroup(['fohUp','fohLo'],+this.value)">
+      <span class="ival" id="foh-intv">55%</span>
+    </div>
+    <div class="irow">
+      <span>フェード</span><input type="range" id="foh-fade" min="0" max="5" step="0.5" value="0" oninput="onLFadeGroup(['fohUp','fohLo'],+this.value)">
+      <span class="ival" id="foh-fadev">0s</span>
+    </div>
+  </div>
+
+  <!-- SS LIGHTS -->
+  <div class="ph"><span class="ph-l">🔆 SS照明（袖→ステージ）</span></div>
+  <div class="rs">
+    <label class="rl">一幕 — 上手（ステージから向かって右）</label>
+    <div class="ltgrid" style="grid-template-columns:1fr 1fr">
+      <button class="ltb" id="lt-ss1RU" onclick="ltToggle('ss1RU')">上段 OFF</button>
+      <button class="ltb" id="lt-ss1RL" onclick="ltToggle('ss1RL')">下段 OFF</button>
+    </div>
+    <label class="rl" style="margin-top:5px">一幕 — 下手（ステージから向かって左）</label>
+    <div class="ltgrid" style="grid-template-columns:1fr 1fr">
+      <button class="ltb" id="lt-ss1LU" onclick="ltToggle('ss1LU')">上段 OFF</button>
+      <button class="ltb" id="lt-ss1LL" onclick="ltToggle('ss1LL')">下段 OFF</button>
+    </div>
+    <div class="irow" style="margin-top:4px">
+      <span>色</span><input type="color" id="ss1-col" value="#ffdd88" style="width:26px;height:18px;border:none;cursor:pointer;padding:0" onchange="onLColGroup(['ss1LU','ss1LL','ss1RU','ss1RL'],this.value)">
+      <span>強さ</span><input type="range" id="ss1-int" min="0" max="100" value="55" oninput="onLIntGroup(['ss1LU','ss1LL','ss1RU','ss1RL'],+this.value)">
+      <span class="ival" id="ss1-intv">55%</span>
+    </div>
+    <div class="irow">
+      <span>フェード</span><input type="range" id="ss1-fade" min="0" max="5" step="0.5" value="0" oninput="onLFadeGroup(['ss1LU','ss1LL','ss1RU','ss1RL'],+this.value)">
+      <span class="ival" id="ss1-fadev">0s</span>
+    </div>
+    <label class="rl" style="margin-top:6px">二幕 — 上手</label>
+    <div class="ltgrid" style="grid-template-columns:1fr 1fr">
+      <button class="ltb" id="lt-ss2RU" onclick="ltToggle('ss2RU')">上段 OFF</button>
+      <button class="ltb" id="lt-ss2RL" onclick="ltToggle('ss2RL')">下段 OFF</button>
+    </div>
+    <label class="rl" style="margin-top:5px">二幕 — 下手</label>
+    <div class="ltgrid" style="grid-template-columns:1fr 1fr">
+      <button class="ltb" id="lt-ss2LU" onclick="ltToggle('ss2LU')">上段 OFF</button>
+      <button class="ltb" id="lt-ss2LL" onclick="ltToggle('ss2LL')">下段 OFF</button>
+    </div>
+    <div class="irow" style="margin-top:4px">
+      <span>色</span><input type="color" id="ss2-col" value="#fff5d0" style="width:26px;height:18px;border:none;cursor:pointer;padding:0" onchange="onLColGroup(['ss2LU','ss2LL','ss2RU','ss2RL'],this.value)">
+      <span>強さ</span><input type="range" id="ss2-int" min="0" max="100" value="55" oninput="onLIntGroup(['ss2LU','ss2LL','ss2RU','ss2RL'],+this.value)">
+      <span class="ival" id="ss2-intv">55%</span>
+    </div>
+    <div class="irow">
+      <span>フェード</span><input type="range" id="ss2-fade" min="0" max="5" step="0.5" value="0" oninput="onLFadeGroup(['ss2LU','ss2LL','ss2RU','ss2RL'],+this.value)">
+      <span class="ival" id="ss2-fadev">0s</span>
+    </div>
+  </div>
+
+  <!-- STAGE SETTINGS -->
+  <div class="ph"><span class="ph-l">🎬 ステージ</span></div>
+  <div class="rs">
+    <div style="display:flex;gap:5px;align-items:flex-end">
+      <div style="flex:1"><label class="rl">幅 (m)</label><input type="number" class="ri" id="sw" value="18" min="4" max="30" onchange="rebuildStage()"></div>
+      <div style="flex:1"><label class="rl">奥行 (m)</label><input type="number" class="ri" id="sd" value="10" min="4" max="20" onchange="rebuildStage()"></div>
+      <div style="flex:1"><label class="rl">高さ</label><input type="number" class="ri" id="sh" value="0.4" min="0.1" max="1.2" step="0.05" onchange="rebuildStage()"></div>
+    </div>
+    <label class="rl" style="margin-top:5px">床材</label>
+    <div class="ltgrid" style="grid-template-columns:repeat(3,1fr);margin-top:2px">
+      <button class="ltb on" id="mat-concrete" onclick="setMat('concrete')">コンクリ</button>
+      <button class="ltb" id="mat-wood" onclick="setMat('wood')">木目</button>
+      <button class="ltb" id="mat-dark" onclick="setMat('dark')">黒</button>
+      <button class="ltb" id="mat-marble" onclick="setMat('marble')">大理石</button>
+      <button class="ltb" id="mat-neon" onclick="setMat('neon')">近未来</button>
+      <button class="ltb" id="mat-custom" onclick="setMat('custom')" style="font-size:9px">カスタム</button>
+    </div>
+    <input type="color" id="stageCustomCol" value="#6699aa" style="width:100%;height:22px;margin-top:3px;border:1px solid #1a1a30;border-radius:3px;cursor:pointer;padding:1px" onchange="setMat('custom')">
+    <div class="ltgrid" style="grid-template-columns:1fr 1fr;margin-top:5px">
+      <button class="ltb on" id="kentog" onclick="toggleKen()">間マーク 表示</button>
+      <button class="ltb" id="winghide" onclick="toggleWingVis()">袖エリア 表示</button>
+    </div>
+  </div>
+
+  <!-- ホリゾント -->
+  <div class="ph"><span class="ph-l">🎨 ホリゾント背景色</span></div>
+  <div class="rs">
+    <!-- 地色 -->
+    <div class="irow">
+      <span style="min-width:36px;font-size:9px">地色</span>
+      <input type="color" id="horz-col" value="#111122"
+        style="width:36px;height:26px;border:1px solid #2a2a55;border-radius:4px;cursor:pointer;padding:1px"
+        onchange="ST.horzColor=this.value;syncHorz()">
+      <span style="font-size:9px;color:#33335a;margin-left:4px">ホリゾントの地色</span>
+    </div>
+    <!-- アッパー -->
+    <div style="background:#0a0a1e;border:1px solid #1a1a3a;border-radius:5px;padding:5px 7px;margin-bottom:4px">
+      <div style="font-size:9px;color:#ffaa33;font-weight:700;margin-bottom:4px">🔦 アッパー（上から）</div>
+      <div style="display:flex;align-items:center;gap:5px">
+        <input type="color" id="horz-up-col" value="#0000ff"
+          style="width:36px;height:28px;border:1px solid #223366;border-radius:4px;cursor:pointer;padding:1px"
+          onchange="ST.horzUpperColor=this.value;syncHorz()">
+        <button class="ltb" id="horz-up-tog"
+          onclick="ST.horzUpperOn=!ST.horzUpperOn;this.classList.toggle('on',ST.horzUpperOn);this.textContent=ST.horzUpperOn?'ON':'OFF';syncHorz()"
+          style="min-width:36px;font-size:11px">OFF</button>
+        <input type="range" min="0" max="100" value="60" id="horz-up-int"
+          style="flex:1" oninput="ST.horzUpperInt=+this.value;syncHorz()">
+        <span class="ival" id="horz-up-intv">60%</span>
+      </div>
+    </div>
+    <!-- ダウン -->
+    <div style="background:#0a0a1e;border:1px solid #1a1a3a;border-radius:5px;padding:5px 7px">
+      <div style="font-size:9px;color:#ffcc44;font-weight:700;margin-bottom:4px">🔦 ダウン（下から）</div>
+      <div style="display:flex;align-items:center;gap:5px">
+        <input type="color" id="horz-lo-col" value="#ff4400"
+          style="width:36px;height:28px;border:1px solid #332200;border-radius:4px;cursor:pointer;padding:1px"
+          onchange="ST.horzLowerColor=this.value;syncHorz()">
+        <button class="ltb" id="horz-lo-tog"
+          onclick="ST.horzLowerOn=!ST.horzLowerOn;this.classList.toggle('on',ST.horzLowerOn);this.textContent=ST.horzLowerOn?'ON':'OFF';syncHorz()"
+          style="min-width:36px;font-size:11px">OFF</button>
+        <input type="range" min="0" max="100" value="60" id="horz-lo-int"
+          style="flex:1" oninput="ST.horzLowerInt=+this.value;syncHorz()">
+        <span class="ival" id="horz-lo-intv">60%</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="ph"><span class="ph-l">📤 ファイル</span></div>
+  <div class="rs">
+    <div class="pbtns" style="padding:0">
+      <button class="pb" onclick="exportJ()">JSON書出</button>
+      <button class="pb" onclick="importJ()">JSON読込</button>
+    </div>
+    <div class="pbtns" style="padding:3px 0 0">
+      <button class="pb" onclick="exportKFReport()" style="border-color:#334466;color:#8899cc;font-size:10px">📄 KF一覧PDF</button>
+      <button class="pb" onclick="exportStagePDF()" style="border-color:#334466;color:#8899cc;font-size:10px">📐 立ち位置図面PDF</button>
+    </div>
+  </div>
+</div>
+</div><!-- #app -->
+
+<!-- SAVE MODAL -->
+<div id="smodal">
+  <div class="smbox">
+    <h3>💾 保存方法を選択</h3>
+    <p>「<span id="sm-p"></span>」/「<span id="sm-w"></span>」</p>
+    <div class="smb" onclick="doSave('local')">🖥 ブラウザ内に保存<div class="smb-sub">このブラウザのみ。消去・キャッシュ削除で消える場合あり。</div></div>
+    <div class="smb" onclick="doSave('json')">📄 JSONファイルに書き出す<div class="smb-sub">ダウンロードフォルダに保存。バックアップ・共有・別端末での読込可。</div></div>
+    <div class="smb cancel" onclick="closeSaveModal()">キャンセル</div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+// ═══════════════════════════════════════════════════
+// CONSTANTS
+// ═══════════════════════════════════════════════════
+const KEN = 1.818;
+const WING_W = 3.0; // offstage wing width
+const PCOLS = ['#e05555','#4488dd','#33cc77','#e8a030','#9966dd','#22bbaa','#dd5588','#55aacc','#cc8844','#44aacc'];
+const LCOLS_PRESET = [
+  {n:'白',h:'#ffffff'},{n:'生',h:'#fff5d0'},{n:'アンバー',h:'#ff9922'},
+  {n:'赤',h:'#ff2211'},{n:'青',h:'#1133ff'},{n:'緑',h:'#00cc33'}
+];
+const STAGE_MATS = {
+  concrete:{color:0x8a8a80,roughness:1},
+  wood:{color:0xb07040,roughness:0.9},
+  dark:{color:0x111118,roughness:0.8},
+  marble:{color:0xd8d0c8,roughness:0.3},
+  neon:{color:0x050a18,roughness:0.8,emissive:0x002040},
+  custom:{color:0x6699aa,roughness:0.8}
+};
+
+// ═══════════════════════════════════════════════════
+// LIGHT STATE
+// ═══════════════════════════════════════════════════
+const LIGHT_IDS = ['backSus','backSusB','backFoot','fohUp','fohLo',
+  'ss1LU','ss1LL','ss1RU','ss1RL',
+  'ss2LU','ss2LL','ss2RU','ss2RL'];
+const LS = {}; // light state
+LIGHT_IDS.forEach(id=>{
+  LS[id] = {kfs:[{t:0,on:false}], color:'#ffffff', intensity:60};
+});
+LS.backSus.mode = 'parallel';
+LS.backSusB = {kfs:[{t:0,on:false}], color:'#4488ff', intensity:60, mode:'parallel'};
+LS.backFoot.color='#ffffff'; LS.backFoot.intensity=70;
+LS.fohUp.color='#ffffff'; LS.fohUp.intensity=55;
+LS.fohLo.color='#ffffff'; LS.fohLo.intensity=55;
+['ss1LU','ss1LL','ss1RU','ss1RL'].forEach(k=>{LS[k].color='#ffdd88';LS[k].intensity=60;});
+['ss2LU','ss2LL','ss2RU','ss2RL'].forEach(k=>{LS[k].color='#fff5d0';LS[k].intensity=60;});
+
+const LG = {}; // THREE.js groups  id -> {grp, spots[]}
+let _did=0,_lid=0;
+
+// ═══════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════
+let ST = {
+  dancers:[],
+  susLights:[],
+  t:0, dur:180, playing:false, selId:null,
+  stW:18, stD:10, stH:0.4, stMat:'concrete',
+  susR:5, susC:7,
+  showKen:true, showWing:false,
+  moveMode:false, selWork:null,
+};
+
+// ═══════════════════════════════════════════════════
+// THREE.JS
+// ═══════════════════════════════════════════════════
+let ren,sce,cam,floor3,stageBox,wingL,wingR;
+let stObjs=[],dMesh={},susMeshes={};
+const ray=new THREE.Raycaster();
+const mu=new THREE.Vector2();
+let camR=20,camPhi=0.76,camTh=0,camTgt=new THREE.Vector3();
+let isDrag=false,lastPt={x:0,y:0},pinchD=0,tapT=0,tapX=0,tapY=0,scrubNow=false;
+let stageLocked=false;
+
+// ── 全画面（ステージのみ）──
+let _tlParent=null, _tlNext=null; // タイムラインの元の位置を記憶
+
+function toggleFullscreen(){
+  const vp=document.getElementById('vp');
+  if(!document.fullscreenElement){
+    vp.requestFullscreen().catch(()=>{});
+  } else {
+    document.exitFullscreen();
+  }
+}
+
+document.addEventListener('fullscreenchange',()=>{
+  const btn=document.getElementById('fsbtn');
+  const tl=document.getElementById('tl');
+  const vp=document.getElementById('vp');
+  if(document.fullscreenElement){
+    // 全画面ON：タイムラインをvpに移動してフロート表示
+    btn.textContent='⛶✕';
+    _tlParent=tl.parentNode;
+    _tlNext=tl.nextSibling;
+    tl.style.cssText=`
+      position:absolute;bottom:0;left:0;right:0;z-index:100;
+      background:rgba(3,3,10,.95);border-top:1px solid #1a1a3a;
+      padding:5px 8px;display:flex;flex-direction:column;gap:3px;
+      backdrop-filter:blur(8px);
+    `;
+    vp.appendChild(tl);
+  } else {
+    // 全画面OFF：タイムラインを元の位置に戻す
+    btn.textContent='⛶';
+    tl.style.cssText='';
+    if(_tlParent){
+      _tlParent.insertBefore(tl, _tlNext);
+      _tlParent=null; _tlNext=null;
+    }
+  }
+  setTimeout(()=>resize(), 100);
+});
+
+// ── ラインサス パターン選択 ──
+// 選択したパターンのサスをON、それ以外はOFFにする
+function susPat(pat){
+  const R=ST.susR, C=ST.susC;
+  // パターン該当サスを特定
+  const match=l=>{
+    const r=l.r,c=l.c;
+    switch(pat){
+      case 'kamite':  return c >= Math.ceil(C/2);
+      case 'shimote': return c < Math.floor(C/2);
+      case 'center':  return Math.abs(c-(C-1)/2) < 1.5;
+      case 'front':   return r === R-1;
+      case 'back':    return r === 0;
+      case 'diagL':   return (r+c)%3===0;
+      case 'diagR':   return (r+(C-1-c))%3===0;
+      case 'checker': return (r+c)%2===0;
+    }
+    return false;
+  };
+  const targets=ST.susLights.filter(match);
+  // 全部ONならOFFに、そうでなければONに（トグル）
+  const allOn=targets.length>0&&targets.every(l=>getOnAt(l.kfs,ST.t));
+  const newOn=!allOn;
+  targets.forEach(l=>{
+    const ex=l.kfs.find(k=>Math.abs(k.t-ST.t)<0.15);
+    if(ex)ex.on=newOn; else{l.kfs.push({t:ST.t,on:newOn});l.kfs.sort((a,b)=>a.t-b.t);}
+    syncSusMesh(l);
+  });
+  updSusUI();renderTL();
+  showMode(`💡 ${pat} ${newOn?'ON':'OFF'} (${targets.length}灯)`);
+}
+
+// ── バックサス 上手/下手 個別 ──
+function backSusSide(ab,side){
+  const id=ab==='A'?'backSus':'backSusB';
+  const entry=LG[id]; if(!entry)return;
+  const state=LS[id];
+  // 該当側のspotが全部ONかチェック
+  const sidespots=entry.spots.filter(s=>{
+    if(!s.spot)return false;
+    return side==='kamite'?(s.x>0):(s.x<=0);
+  });
+  const allOn=sidespots.every(s=>s.spot.intensity>0.01);
+  const newOn=!allOn;
+  entry.spots.forEach(s=>{
+    if(!s.spot)return;
+    const isKamite=s.x>0;
+    const isTarget=(side==='kamite'&&isKamite)||(side==='shimote'&&!isKamite);
+    if(!isTarget)return;
+    s.spot.intensity=newOn?(state.intensity/100)*5:0;
+    if(s.cone)s.cone.material.opacity=newOn?0.11:0;
+  });
+  // プレビュー = どこかのspotがONならON
+  _ltPreview[id]=entry.spots.some(s=>s.spot&&s.spot.intensity>0.01);
+  const btn=document.getElementById('lt-'+id);
+  if(btn){
+    const base=btn.dataset.label||'';
+    btn.textContent=base+(_ltPreview[id]?' ON':' OFF');
+    btn.className='ltb'+(_ltPreview[id]?' on':'');
+  }
+  showMode(`🔦 バックサス${ab} ${side==='kamite'?'上手':'下手'} ${newOn?'ON':'OFF'}`);
+}
+
+// ── 行ごとON/OFFボタンを追加 ──
+function buildSusRowUI(){
+  const el=document.getElementById('sus-rows-ui'); if(!el)return;
+  el.innerHTML='';
+  for(let r=0;r<ST.susR;r++){
+    const btn=document.createElement('div');
+    btn.className='ltb';btn.style.cssText='font-size:9px;padding:2px 6px;flex:1;min-width:28px';
+    btn.textContent=`${r+1}行`;
+    btn.title=`${r+1}行目のサスをON/OFF`;
+    btn.onclick=(()=>{const row=r;return()=>susRowToggle(row);})(r);
+    el.appendChild(btn);
+  }
+  // 列ボタン
+  const sep=document.createElement('span');sep.style.cssText='width:100%;font-size:8px;color:#33335a;margin-top:3px';
+  sep.textContent='列';el.appendChild(sep);
+  for(let c=0;c<ST.susC;c++){
+    const btn=document.createElement('div');
+    btn.className='ltb';btn.style.cssText='font-size:9px;padding:2px 5px;flex:1;min-width:22px';
+    btn.textContent=`${c+1}`;btn.title=`${c+1}列目をON/OFF`;
+    btn.onclick=(()=>{const col=c;return()=>susColToggle(col);})(c);
+    el.appendChild(btn);
+  }
+}
+function susRowToggle(row){
+  const lights=ST.susLights.filter(l=>l.r===row);
+  const anyOn=lights.some(l=>getOnAt(l.kfs,ST.t));
+  lights.forEach(l=>{
+    const ex=l.kfs.find(k=>Math.abs(k.t-ST.t)<0.15);
+    const on=!anyOn;
+    if(ex)ex.on=on; else{l.kfs.push({t:ST.t,on});l.kfs.sort((a,b)=>a.t-b.t);}
+    syncSusMesh(l);
+  });
+  updSusUI();renderTL();showMode(`${row+1}行 ${anyOn?'OFF':'ON'}`);
+}
+function susColToggle(col){
+  const lights=ST.susLights.filter(l=>l.c===col);
+  const anyOn=lights.some(l=>getOnAt(l.kfs,ST.t));
+  lights.forEach(l=>{
+    const ex=l.kfs.find(k=>Math.abs(k.t-ST.t)<0.15);
+    const on=!anyOn;
+    if(ex)ex.on=on; else{l.kfs.push({t:ST.t,on});l.kfs.sort((a,b)=>a.t-b.t);}
+    syncSusMesh(l);
+  });
+  updSusUI();renderTL();showMode(`${col+1}列 ${anyOn?'OFF':'ON'}`);
+}
+
+function toggleLock(){
+  stageLocked=!stageLocked;  // ← これが消えていた
+  const btn=document.getElementById('lockbtn');
+  if(stageLocked){
+    btn.textContent='🔒 固定中';
+    btn.style.background='#1a0e00';
+    btn.style.borderColor='#aa6600';
+    btn.style.color='#ffaa33';
+    if(ST.selId) enterMoveMode();
+  } else {
+    btn.textContent='🔓 固定';
+    btn.style.background='';
+    btn.style.borderColor='#553311';
+    btn.style.color='#aa6622';
+    ST.moveMode=false;
+    document.getElementById('movetip').style.display='none';
+  }
+}
+
+function initThree(){
+  const cv=document.getElementById('c3');
+  cv.style.touchAction='none'; // ← これがないとiOSがスクロールを優先して横取りする
+  cv.style.userSelect='none';
+  cv.style.webkitUserSelect='none';
+
+  ren=new THREE.WebGLRenderer({canvas:cv,antialias:true,powerPreference:'high-performance'});
+  ren.shadowMap.enabled=true;
+  ren.shadowMap.type=THREE.PCFSoftShadowMap;
+  ren.setClearColor(0x03030a);
+  ren.setPixelRatio(Math.min(devicePixelRatio,2));
+  sce=new THREE.Scene();
+  sce.fog=new THREE.Fog(0x03030a,30,70);
+  cam=new THREE.PerspectiveCamera(46,1,0.1,200);
+  sce.add(new THREE.AmbientLight(0x111122,0.6));
+  const dl=new THREE.DirectionalLight(0x4455aa,0.3);
+  dl.position.set(4,14,6); sce.add(dl);
+  resize();
+  window.addEventListener('resize',resize);
+
+  cv.addEventListener('webglcontextlost',e=>{e.preventDefault();showMode('⚠ 復元中...');},false);
+  cv.addEventListener('webglcontextrestored',()=>{
+    buildStage();buildAllLights();
+    ST.susLights.forEach(l=>mkSusMesh(l));buildSusUI();
+    Object.keys(dMesh).forEach(id=>{sce.remove(dMesh[id]);delete dMesh[id];});
+    ST.dancers.forEach(d=>mkDancerMesh(d));syncAll();showMode('✓ 復元しました');
+  },false);
+  document.addEventListener('visibilitychange',()=>{
+    if(!document.hidden)setTimeout(()=>{resize();updCam();},150);
+  });
+
+  cv.addEventListener('wheel',e=>{
+    e.preventDefault();
+    // MacBookトラックパッドのピンチ: ctrlKey=true, deltaY が小さい
+    // マウスホイール: ctrlKey=false, deltaY が大きい
+    const factor = e.ctrlKey ? 0.008 : 0.025;
+    camR=clamp(camR+e.deltaY*factor,3,55);
+    updCam();
+  },{passive:false});
+
+  // ── iOS確実対応: canvas上の透明divにPointer Eventsを登録 ──
+  const tl=document.getElementById('touch-layer');
+  tl.addEventListener('pointerdown', onPD, {passive:false});
+  tl.addEventListener('pointermove', onPM, {passive:false});
+  tl.addEventListener('pointerup',   onPU, {passive:false});
+  tl.addEventListener('pointercancel', onPU, {passive:false});
+  // touch-layerにもwheelを登録（トラックパッドピンチ対策）
+  tl.addEventListener('wheel',e=>{
+    e.preventDefault();
+    const factor=e.ctrlKey?0.008:0.025;
+    camR=clamp(camR+e.deltaY*factor,3,55);
+    updCam();
+  },{passive:false});
+}
+
+function resize(){
+  const vp=document.getElementById('vp');
+  const w=vp.clientWidth||300,h=vp.clientHeight||200;
+  cam.aspect=w/h; cam.updateProjectionMatrix();
+  ren.setSize(w,h);
+}
+function updCam(){
+  cam.position.set(camTgt.x+camR*Math.sin(camPhi)*Math.sin(camTh),camTgt.y+camR*Math.cos(camPhi),camTgt.z+camR*Math.sin(camPhi)*Math.cos(camTh));
+  cam.lookAt(camTgt);
+}
+function setView(v){
+  if(v==='front'){camTh=0;camPhi=0.76;camR=20;}
+  else if(v==='top'){camPhi=0.06;camR=28;}
+  else if(v==='side'){camTh=Math.PI/2;camPhi=0.76;camR=20;}
+  updCam();
+}
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+
+// ── STAGE ──
+function buildStage(){
+  stObjs.forEach(o=>sce.remove(o)); stObjs=[];
+  const W=ST.stW,D=ST.stD,H=ST.stH,CEILING=7.5;
+  const mat=STAGE_MATS[ST.stMat]||STAGE_MATS.concrete;
+  let stageColor=mat.color;
+  if(ST.stMat==='custom'){
+    const hex=document.getElementById('stageCustomCol').value;
+    stageColor=parseInt(hex.slice(1),16);
+  }
+  // Stage platform (thick box)
+  const geo=new THREE.BoxGeometry(W,H,D);
+  const mat3=new THREE.MeshLambertMaterial({color:stageColor});
+  if(mat.emissive)mat3.emissive=new THREE.Color(mat.emissive);
+  stageBox=new THREE.Mesh(geo,mat3);
+  stageBox.position.y=-H/2; // top surface at y=0
+  stageBox.receiveShadow=true; stageBox.castShadow=false;
+  sce.add(stageBox); stObjs.push(stageBox);
+  // Edge glow on top
+  const edgeMat=new THREE.LineBasicMaterial({color:0x1e2855});
+  const edgePts=[[-W/2,0,-D/2],[W/2,0,-D/2],[W/2,0,D/2],[-W/2,0,D/2],[-W/2,0,-D/2]];
+  add3Line(edgePts,0x1e2855);
+  // Side edges of box
+  [[-1,-1],[1,-1],[-1,1],[1,1]].forEach(([sx,sz])=>{
+    add3Line([[sx*W/2,0,sz*D/2],[sx*W/2,-H,sz*D/2]],0x111128);
+  });
+  // ── ステージ内 1m 網目グリッド ──
+  const gridY=0.013;
+  const gridCol=0x1e2e44;        // 通常の罫線
+  const halfColH=0x2a3a55;       // 0.5m ハーフライン（少し明るめ）
+  // 縦ライン（X方向）
+  for(let xi=-Math.ceil(W/2);xi<=Math.ceil(W/2);xi++){
+    const x=xi;
+    if(Math.abs(x)>W/2+0.01)continue;
+    add3Line([[x,gridY,-D/2],[x,gridY,D/2]],xi===0?0x334466:gridCol);
+  }
+  // 横ライン（Z方向）
+  for(let zi=-Math.ceil(D/2);zi<=Math.ceil(D/2);zi++){
+    const z=zi;
+    if(Math.abs(z)>D/2+0.01)continue;
+    add3Line([[-W/2,gridY,z],[W/2,gridY,z]],zi===0?0x334466:gridCol);
+  }
+  // Audience edge（前縁を明るく）
+  add3Line([[-W/2,0.015,D/2],[W/2,0.015,D/2]],0x3355aa);
+  // Ceiling rig
+  add3Line([[-W/2,CEILING,-D/2],[W/2,CEILING,-D/2],[W/2,CEILING,D/2],[-W/2,CEILING,D/2],[-W/2,CEILING,-D/2]],0x111128);
+  [[-1,-1],[1,-1],[-1,1],[1,1]].forEach(([sx,sz])=>add3Line([[sx*W/2,0,sz*D/2],[sx*W/2,CEILING,sz*D/2]],0x0c0c1c));
+  // Center marker（ヘソ）— 目立つ白い丸
+  const centerDot=new THREE.Mesh(
+    new THREE.CircleGeometry(0.18,16),
+    new THREE.MeshBasicMaterial({color:0xffffff,transparent:true,opacity:0.7,side:THREE.DoubleSide})
+  );
+  centerDot.rotation.x=-Math.PI/2; centerDot.position.y=0.016;
+  sce.add(centerDot); stObjs.push(centerDot);
+  // Ken lines — 少し明るく
+  if(ST.showKen){
+    const maxK=Math.ceil(W/2/KEN)+1;
+    for(let k=-maxK;k<=maxK;k++){
+      const x=k*KEN; if(Math.abs(x)>W/2+0.01)continue;
+      add3Line([[x,0.013,-D/2],[x,0.013,D/2]],k===0?0x3355aa:0x1a1a3a);
+    }
+  }
+  // Wing areas (optional)
+  if(ST.showWing){
+    const wingGeoL=new THREE.PlaneGeometry(WING_W,D);
+    const wingGeoR=new THREE.PlaneGeometry(WING_W,D);
+    const wingMat=new THREE.MeshLambertMaterial({color:0x080812,transparent:true,opacity:0.85,side:THREE.DoubleSide});
+    wingL=new THREE.Mesh(wingGeoL,wingMat);
+    wingL.rotation.x=-Math.PI/2;
+    wingL.position.set(-(W/2+WING_W/2),0.005,0);
+    wingR=new THREE.Mesh(wingGeoR,wingMat.clone());
+    wingR.rotation.x=-Math.PI/2;
+    wingR.position.set(W/2+WING_W/2,0.005,0);
+    sce.add(wingL); sce.add(wingR);
+    stObjs.push(wingL); stObjs.push(wingR);
+    // Wing borders
+    add3Line([[-(W/2),0.01,-D/2],[-(W/2+WING_W),0.01,-D/2],[-(W/2+WING_W),0.01,D/2],[-(W/2),0.01,D/2]],0x1a1a10);
+    add3Line([[W/2,0.01,-D/2],[W/2+WING_W,0.01,-D/2],[W/2+WING_W,0.01,D/2],[W/2,0.01,D/2]],0x1a1a10);
+  }
+
+  // ── ホリゾント（後方の背景幕）── VertexColorsでグラデーション
+  const H3=ST.stH||0.4;
+  const horzH=ST.horzH||8;
+  const horzGeo=new THREE.PlaneGeometry(W+WING_W*2+2, horzH, 1, 16); // 縦を16分割してグラデーション滑らか
+  // VertexColors対応マテリアル
+  const horzMat=new THREE.MeshBasicMaterial({
+    vertexColors: true,
+    side: THREE.DoubleSide
+  });
+  const horz=new THREE.Mesh(horzGeo, horzMat);
+  horz.position.set(0, horzH/2, -D/2-0.08);
+  sce.add(horz); stObjs.push(horz);
+  ST._horzMesh=horz;
+  buildHorzLights(W,D,H3,horzH);
+  syncHorz(); // 初期色を塗る
+}
+
+let horzLights={upper:null,lower:null};
+function buildHorzLights(W,D,H3,horzH){
+  horzLights={upper:null,lower:null,utgt:null,ltgt:null};
+}
+
+function syncHorz(){
+  const hm=ST._horzMesh; if(!hm)return;
+  const geo=hm.geometry;
+  const pos=geo.attributes.position;
+  const count=pos.count;
+
+  // 頂点カラー配列を作る（なければ新規作成）
+  let colors=geo.attributes.color;
+  if(!colors){
+    colors=new THREE.BufferAttribute(new Float32Array(count*3),3);
+    geo.setAttribute('color',colors);
+  }
+
+  const base =new THREE.Color(ST.horzColor||'#111122');
+  const upper=new THREE.Color(ST.horzUpperColor||'#0000ff');
+  const lower=new THREE.Color(ST.horzLowerColor||'#ff4400');
+  const ui=ST.horzUpperOn?(ST.horzUpperInt||60)/100:0;
+  const li=ST.horzLowerOn?(ST.horzLowerInt||60)/100:0;
+
+  // PlaneGeometryの頂点Y座標: ±horzH/2（中心が0）
+  // Y=+horzH/2 → 上端 → upper色
+  // Y=-horzH/2 → 下端 → lower色
+  const hH=ST.horzH||8;
+  for(let i=0;i<count;i++){
+    const y=pos.getY(i); // -hH/2 〜 +hH/2
+    const t=(y+hH/2)/hH; // 0(下端)〜1(上端)
+
+    // 各頂点: base + upper*t*ui + lower*(1-t)*li
+    const r=Math.min(1, base.r + upper.r*t*ui + lower.r*(1-t)*li);
+    const g=Math.min(1, base.g + upper.g*t*ui + lower.g*(1-t)*li);
+    const b=Math.min(1, base.b + upper.b*t*ui + lower.b*(1-t)*li);
+    colors.setXYZ(i,r,g,b);
+  }
+  colors.needsUpdate=true;
+}
+function add3Line(pts,color){
+  const g=new THREE.BufferGeometry().setFromPoints(pts.map(([x,y,z])=>new THREE.Vector3(x,y,z)));
+  const l=new THREE.Line(g,new THREE.LineBasicMaterial({color}));
+  sce.add(l); stObjs.push(l); return l;
+}
+
+// ── DANCER MESHES ──
+function mkDancerMesh(d){
+  const g=new THREE.Group(); g.userData.did=d.id;
+  const c=new THREE.Color(d.color);
+  const mats=[];
+  const addP=(geo,px,py,pz,rx=0,rz=0)=>{
+    const m=new THREE.MeshLambertMaterial({color:c.clone()});
+    mats.push(m);
+    const mesh=new THREE.Mesh(geo,m);
+    mesh.position.set(px,py,pz);
+    if(rx)mesh.rotation.x=rx;
+    if(rz)mesh.rotation.z=rz;
+    mesh.castShadow=true; g.add(mesh);
+  };
+  addP(new THREE.CylinderGeometry(0.065,0.075,0.72,6),-0.1,0.36,0);
+  addP(new THREE.CylinderGeometry(0.065,0.075,0.72,6), 0.1,0.36,0);
+  addP(new THREE.CylinderGeometry(0.13,0.11,0.65,8),0,1.06,0);
+  addP(new THREE.SphereGeometry(0.19,10,8),0,1.6,0);
+  addP(new THREE.CylinderGeometry(0.055,0.055,0.52,6),-0.26,1.06,0,0, 0.44);
+  addP(new THREE.CylinderGeometry(0.055,0.055,0.52,6), 0.26,1.06,0,0,-0.44);
+  // 大きな透明なヒットボックス（クリックしやすくするため）
+  const hitbox=new THREE.Mesh(
+    new THREE.SphereGeometry(0.45,8,6),
+    new THREE.MeshBasicMaterial({transparent:true,opacity:0,depthWrite:false})
+  );
+  hitbox.position.set(0,0.9,0);
+  g.add(hitbox);
+  const ring=new THREE.Mesh(new THREE.RingGeometry(0.32,0.44,24),new THREE.MeshBasicMaterial({color:0x4466ff,side:THREE.DoubleSide,transparent:true,opacity:0}));
+  ring.rotation.x=-Math.PI/2; ring.position.y=0.01;
+  g.add(ring);
+  g.userData={...g.userData,ring,mats};
+  sce.add(g); dMesh[d.id]=g;
+  syncDancer(d);
+}
+function rmDancerMesh(id){if(dMesh[id]){sce.remove(dMesh[id]);delete dMesh[id];}}
+function syncDancer(d){
+  const g=dMesh[d.id]; if(!g)return;
+  const p=interpPos(d,ST.t);
+  g.position.set(p.x,0,p.z);
+  g.visible=d.visible;
+  const sel=d.id===ST.selId;
+  g.userData.ring.material.opacity=sel?0.85:0;
+  const c=new THREE.Color(d.color);
+  g.userData.mats.forEach(m=>m.color.copy(c));
+}
+function interpPos(d,t){
+  const kfs=[...d.kfs].sort((a,b)=>a.t-b.t);
+  if(!kfs.length)return{x:0,z:0};
+  if(t<=kfs[0].t)return{x:kfs[0].x,z:kfs[0].z};
+  if(t>=kfs[kfs.length-1].t)return kfs[kfs.length-1];
+  for(let i=0;i<kfs.length-1;i++){
+    if(t>=kfs[i].t&&t<kfs[i+1].t){
+      const u=(t-kfs[i].t)/(kfs[i+1].t-kfs[i].t);
+      const e=u<0.5?2*u*u:-1+(4-2*u)*u; // ease in-out
+      return{x:kfs[i].x+(kfs[i+1].x-kfs[i].x)*e,z:kfs[i].z+(kfs[i+1].z-kfs[i].z)*e};
+    }
+  }
+  return kfs[kfs.length-1];
+}
+
+// ── SUS GRID ──
+function mkSusData(r,c){
+  const x=-ST.stW/2+(c+0.5)*ST.stW/ST.susC;
+  const z=-ST.stD/2+(r+0.5)*ST.stD/ST.susR;
+  return{id:++_lid,r,c,x,z,kfs:[{t:0,on:false}]};
+}
+function mkSusMesh(l){
+  const H=7.5; const g=new THREE.Group(); g.position.set(l.x,0,l.z);
+  const spot=new THREE.SpotLight(0xffffff,0,H+5,Math.PI*0.2,0.6,2);
+  spot.position.set(0,H,0);
+  const tgt=new THREE.Object3D(); tgt.position.set(0,0,0);
+  spot.target=tgt; g.add(spot); g.add(tgt);
+  const fix=new THREE.Mesh(new THREE.SphereGeometry(0.07,6,6),new THREE.MeshBasicMaterial({color:0x666}));
+  fix.position.y=H; g.add(fix);
+  const cone=new THREE.Mesh(new THREE.CylinderGeometry(0.04,0.85,H,12,1,true),new THREE.MeshBasicMaterial({transparent:true,opacity:0.08,side:THREE.DoubleSide,depthWrite:false}));
+  cone.position.y=H/2; g.add(cone); // +Y(narrow 0.04)=ceiling, -Y(wide 0.85)=floor ✓
+  const fc=new THREE.Mesh(new THREE.CircleGeometry(0.8,16),new THREE.MeshBasicMaterial({transparent:true,opacity:0,side:THREE.DoubleSide}));
+  fc.rotation.x=-Math.PI/2; fc.position.y=0.015; g.add(fc);
+  g.visible=false; sce.add(g);
+  susMeshes[l.id]={g,spot,cone,fc};
+}
+function rmSusMesh(id){if(susMeshes[id]){sce.remove(susMeshes[id].g);delete susMeshes[id];}}
+let _susFadeIn=0, _susFadeOut=0;
+
+function onSusFadeChange(v){ _susFadeIn=v; _susFadeOut=v; document.getElementById('sus-fadev').textContent=v+'s'; }
+function onSusFadeInChange(v){ _susFadeIn=v; document.getElementById('sus-fadeinv').textContent=v+'s'; }
+function onSusFadeOutChange(v){ _susFadeOut=v; document.getElementById('sus-fadeoutv').textContent=v+'s'; }
+
+function syncSusMesh(l){
+  const m=susMeshes[l.id]; if(!m)return;
+  // 停止中はKF状態を直接反映、再生中だけフェードを使う
+  const level = ST.playing
+    ? getFadeLevel(l.kfs,ST.t,_susFadeIn,_susFadeOut)
+    : (getOnAt(l.kfs,ST.t)?1:0);
+  const c=new THREE.Color(document.getElementById('susCol').value||'#ffbb44');
+  m.g.visible=level>0;
+  m.spot.color.copy(c); m.spot.intensity=level*2.2;
+  m.cone.material.color.copy(c); m.cone.material.opacity=level*0.08;
+  m.fc.material.color.copy(c); m.fc.material.opacity=level*0.2;
+}
+function syncSusMeshes(){ST.susLights.forEach(syncSusMesh);}
+
+function susAllOn(){
+  const c=new THREE.Color(document.getElementById('susCol').value||'#ffbb44');
+  ST.susLights.forEach(l=>{
+    // KFを追加（ST.tを直接使用）
+    const existing=l.kfs.find(k=>Math.abs(k.t-ST.t)<0.15);
+    if(existing)existing.on=true;
+    else{l.kfs.push({t:ST.t,on:true});l.kfs.sort((a,b)=>a.t-b.t);}
+    // Three.jsを直接点灯（フェード無視）
+    const m=susMeshes[l.id]; if(!m)return;
+    m.g.visible=true;
+    m.spot.color.copy(c); m.spot.intensity=2.2;
+    m.cone.material.color.copy(c); m.cone.material.opacity=0.08;
+    m.fc.material.color.copy(c); m.fc.material.opacity=0.2;
+  });
+  updSusUI();renderTL();
+  showMode(`💡 サス 全灯ON @ ${fmt(ST.t)}`);
+}
+
+function susFullOut(){
+  let count=0;
+  ST.susLights.forEach(l=>{
+    const isOn=getOnAt(l.kfs,ST.t);
+    if(!isOn)return;
+    count++;
+    const existing=l.kfs.find(k=>Math.abs(k.t-ST.t)<0.15);
+    if(existing)existing.on=false;
+    else{l.kfs.push({t:ST.t,on:false});l.kfs.sort((a,b)=>a.t-b.t);}
+    syncSusMesh(l); // 停止中でも即消灯（フェードは再生時のみ）
+  });
+  updSusUI();renderTL();
+  showMode(`⬛ サス フルアウト @ ${fmt(ST.t)} — ${count}灯をOFF`);
+}
+
+function toggleSus(id){
+  const l=ST.susLights.find(x=>x.id===id); if(!l)return;
+  const on=getOnAt(l.kfs,ST.t);
+  // KFをST.tで直接追加/更新
+  const ex=l.kfs.find(k=>Math.abs(k.t-ST.t)<0.15);
+  if(ex)ex.on=!on; else{l.kfs.push({t:ST.t,on:!on});l.kfs.sort((a,b)=>a.t-b.t);}
+  syncSusMesh(l); updSusUI(); renderTL(); updDash();
+}
+function updSusUI(){
+  ST.susLights.forEach(l=>{
+    const b=document.getElementById('sb'+l.id); if(!b)return;
+    // KF状態と実際のThree.jsの両方で判定（丸め誤差対策）
+    const kfOn=getOnAt(l.kfs,ST.t);
+    const mesh=susMeshes[l.id];
+    const meshOn=mesh?mesh.spot.intensity>0.01:false;
+    // どちらかがONならON表示
+    b.classList.toggle('on', kfOn||meshOn);
+  });
+}
+function rebuildSus(){
+  ST.susR=parseInt(document.getElementById('sr').value)||3;
+  ST.susC=parseInt(document.getElementById('sc').value)||4;
+  ST.susLights.forEach(l=>rmSusMesh(l.id)); ST.susLights=[];
+  for(let r=0;r<ST.susR;r++)for(let c=0;c<ST.susC;c++){const l=mkSusData(r,c);ST.susLights.push(l);mkSusMesh(l);}
+  buildSusUI(); buildSusRowUI();
+}
+function buildSusUI(){
+  const g=document.getElementById('susgrid');
+  g.style.gridTemplateColumns=`repeat(${ST.susC},1fr)`; g.innerHTML='';
+  ST.susLights.forEach(l=>{
+    const b=document.createElement('div'); b.className='sb'; b.id='sb'+l.id;
+    b.innerHTML=`<span style="font-size:11px">💡</span><span>${l.r+1}-${l.c+1}</span>`;
+    b.onclick=()=>toggleSus(l.id); g.appendChild(b);
+  }); updSusUI();
+}
+
+// ═══════════════════════════════════════════════════
+// LIGHTING SYSTEM — centralized, reliable
+// ═══════════════════════════════════════════════════
+function buildAllLights(){
+  Object.values(LG).forEach(e=>sce.remove(e.grp));
+  Object.keys(LG).forEach(k=>delete LG[k]);
+  const W=ST.stW,D=ST.stD,H=7.5;
+
+  // ── BACK SUS A (6 parallel) + B (6 cross) ──
+  const N_BS = 6;
+  const bsZpos = -D/2 - 0.5;
+  ['backSus','backSusB'].forEach((key,gi)=>{
+    const bsGrp=new THREE.Group(); sce.add(bsGrp);
+    const bsSpots=[];
+    const initColor = gi===0 ? 0xffffff : 0x4488ff; // A=白, B=青
+    for(let i=0;i<N_BS;i++){
+      const x=-W/2+(i/(N_BS-1))*W;
+      const spot=new THREE.SpotLight(initColor,0,H+14,Math.PI*0.13,0.4,1.5);
+      spot.position.set(x,H,bsZpos);
+      const tgt=new THREE.Object3D(); tgt.position.set(x,0,D/4);
+      spot.target=tgt; bsGrp.add(spot); bsGrp.add(tgt);
+      const fix=new THREE.Mesh(new THREE.SphereGeometry(0.08,6,6),new THREE.MeshBasicMaterial({color:gi===0?0x664400:0x004466}));
+      fix.position.set(x,H,bsZpos); bsGrp.add(fix);
+      const coneLen=H+3;
+      // 各バックサスにそれぞれ独立したマテリアルを作成
+      const coneMat=new THREE.MeshBasicMaterial({
+        color:initColor,
+        transparent:true,opacity:0,side:THREE.DoubleSide,depthWrite:false
+      });
+      const cone=new THREE.Mesh(
+        new THREE.CylinderGeometry(0.04,1.2,coneLen,10,1,true),
+        coneMat
+      );
+      bsGrp.add(cone);
+      bsSpots.push({spot,tgt,x,cone,coneLen,sz:bsZpos});
+    }
+    LG[key]={grp:bsGrp,spots:bsSpots};
+  });
+
+  // ── BACK FOOT (5 floor fixtures at rear, beam goes FORWARD toward audience) ──
+  const bfGrp=new THREE.Group(); sce.add(bfGrp);
+  const bfSpots=[];
+  for(let i=0;i<5;i++){
+    const x=-W/2*0.8+(i/4)*W*0.8;
+    const spot=new THREE.SpotLight(0xffffff,0,D*4,Math.PI*0.28,0.3,1.0);
+    const srcX=x, srcY=0.06, srcZ=-D/2+0.1;
+    const tgtX=x*0.5, tgtY=2.5, tgtZ=D/3;
+    spot.position.set(srcX,srcY,srcZ);
+    const tgt=new THREE.Object3D(); tgt.position.set(tgtX,tgtY,tgtZ);
+    spot.target=tgt; bfGrp.add(spot); bfGrp.add(tgt);
+    const fix=new THREE.Mesh(new THREE.BoxGeometry(0.26,0.06,0.12),new THREE.MeshBasicMaterial({color:0x223}));
+    fix.position.set(srcX,0.03,srcZ); bfGrp.add(fix);
+    // Cone: tip(narrow) at source rear-floor, wide end spreads toward audience
+    const coneLen=Math.hypot(tgtX-srcX,tgtY-srcY,tgtZ-srcZ)*1.1;
+    const cone=new THREE.Mesh(
+      new THREE.CylinderGeometry(0.04,2.2,coneLen,10,1,true),
+      new THREE.MeshBasicMaterial({color:0xffffff,transparent:true,opacity:0,side:THREE.DoubleSide,depthWrite:false})
+    );
+    // Orient: +Y (wide end, radiusTop=0.04 is TOP, wait...)
+    // CylinderGeometry(rTop, rBottom): rTop=0.04(narrow)=+Y end, rBottom=2.2(wide)=-Y end
+    // We want narrow(+Y) at SOURCE, wide(-Y) toward audience
+    // Direction from source to audience: (tgt-src)
+    // +Y of cone should point toward source = negate the beam direction
+    const dir=new THREE.Vector3(tgtX-srcX,tgtY-srcY,tgtZ-srcZ).normalize();
+    cone.position.set((srcX+tgtX)/2,(srcY+tgtY)/2,(srcZ+tgtZ)/2);
+    cone.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),dir.clone().negate());
+    bfGrp.add(cone);
+    bfSpots.push({spot,tgt,cone,coneLen,srcX,srcY,srcZ,tgtX,tgtY,tgtZ});
+  }
+  LG.backFoot={grp:bfGrp,spots:bfSpots};
+
+  // ── FOH UPPER — front of house, high angle ──
+  const fohUGrp=new THREE.Group(); sce.add(fohUGrp);
+  const fohUSpots=[];
+  for(let i=0;i<4;i++){
+    const x=-W/2+(i/3)*W;
+    const spot=new THREE.SpotLight(0xffffff,0,D*3,Math.PI*0.18,0.4,1.5);
+    spot.position.set(x,7,D/2+2.5);
+    const tgt=new THREE.Object3D(); tgt.position.set(x,0,-D/6);
+    spot.target=tgt; fohUGrp.add(spot); fohUGrp.add(tgt);
+    const fix=new THREE.Mesh(new THREE.SphereGeometry(0.08,6,6),new THREE.MeshBasicMaterial({color:0x555}));
+    fix.position.set(x,7,D/2+2.5); fohUGrp.add(fix);
+    fohUSpots.push({spot,tgt});
+  }
+  LG.fohUp={grp:fohUGrp,spots:fohUSpots};
+
+  // ── FOH LOWER — lower angle ──
+  const fohLGrp=new THREE.Group(); sce.add(fohLGrp);
+  const fohLSpots=[];
+  for(let i=0;i<4;i++){
+    const x=-W/2+(i/3)*W;
+    const spot=new THREE.SpotLight(0xffffff,0,D*3,Math.PI*0.2,0.45,1.5);
+    spot.position.set(x,3.5,D/2+1.8);
+    const tgt=new THREE.Object3D(); tgt.position.set(x,0.5,-D/8);
+    spot.target=tgt; fohLGrp.add(spot); fohLGrp.add(tgt);
+    const fix=new THREE.Mesh(new THREE.SphereGeometry(0.07,5,5),new THREE.MeshBasicMaterial({color:0x555}));
+    fix.position.set(x,3.5,D/2+1.8); fohLGrp.add(fix);
+    fohLSpots.push({spot,tgt});
+  }
+  LG.fohLo={grp:fohLGrp,spots:fohLSpots};
+
+  // ── SS LIGHTS — 4 positions × 2 tiers (8 total) ──
+  // Upper tier: ~5m high, angles inward
+  // Lower tier (foot): ~1m high, angles inward
+  // SS: 下段=足元(0.3m)、上段=頭の高さ(1.7m)、袖端からステージ中央へ
+  const ssX = W/2 + 0.4;
+  const ssCfg=[
+    {id:'ss1LU',x:-ssX, y:1.7, z:D*0.18, tx: W*0.3, ty:1.5, tz:D*0.1},
+    {id:'ss1LL',x:-ssX, y:0.3, z:D*0.18, tx: W*0.3, ty:0.2, tz:D*0.1},
+    {id:'ss1RU',x: ssX, y:1.7, z:D*0.18, tx:-W*0.3, ty:1.5, tz:D*0.1},
+    {id:'ss1RL',x: ssX, y:0.3, z:D*0.18, tx:-W*0.3, ty:0.2, tz:D*0.1},
+    {id:'ss2LU',x:-ssX, y:1.7, z:-D*0.12, tx: W*0.3, ty:1.5, tz:-D*0.05},
+    {id:'ss2LL',x:-ssX, y:0.3, z:-D*0.12, tx: W*0.3, ty:0.2, tz:-D*0.05},
+    {id:'ss2RU',x: ssX, y:1.7, z:-D*0.12, tx:-W*0.3, ty:1.5, tz:-D*0.05},
+    {id:'ss2RL',x: ssX, y:0.3, z:-D*0.12, tx:-W*0.3, ty:0.2, tz:-D*0.05},
+  ];
+  ssCfg.forEach(cfg=>{
+    const grp=new THREE.Group(); sce.add(grp);
+    const spot=new THREE.SpotLight(0xffcc55,0,W*3.5,Math.PI*0.25,0.45,1.2);
+    spot.position.set(cfg.x,cfg.y,cfg.z);
+    const tgt=new THREE.Object3D(); tgt.position.set(cfg.tx,cfg.ty,cfg.tz);
+    spot.target=tgt; grp.add(spot); grp.add(tgt);
+    const fix=new THREE.Mesh(new THREE.SphereGeometry(0.09,5,5),new THREE.MeshBasicMaterial({color:0x888}));
+    fix.position.set(cfg.x,cfg.y,cfg.z); grp.add(fix);
+    // SS beam cone: tip(narrow) at wing source, wide spreads toward stage center
+    const beamLen=Math.hypot(cfg.tx-cfg.x,cfg.ty-cfg.y,cfg.tz-cfg.z)*1.05;
+    const cone=new THREE.Mesh(
+      new THREE.CylinderGeometry(0.04,1.2,beamLen,8,1,true),
+      new THREE.MeshBasicMaterial({color:0xffcc55,transparent:true,opacity:0,side:THREE.DoubleSide,depthWrite:false})
+    );
+    // +Y(narrow,0.04) at source(wing), -Y(wide,1.2) toward stage
+    const beamDir=new THREE.Vector3(cfg.tx-cfg.x,cfg.ty-cfg.y,cfg.tz-cfg.z).normalize();
+    cone.position.set((cfg.x+cfg.tx)/2,(cfg.y+cfg.ty)/2,(cfg.z+cfg.tz)/2);
+    cone.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),beamDir.clone().negate());
+    grp.add(cone);
+    LG[cfg.id]={grp,spots:[{spot,tgt,cone,beamLen,cfg}]};
+  });
+}
+
+// ── sync a single light by id ──
+function syncLight(id){
+  const entry=LG[id]; if(!entry)return;
+  const state=LS[id];
+  // 停止中はプレビュー状態を直接使用、再生中はKF+フェード
+  let level;
+  if(ST.playing){
+    level = getFadeLevel(state.kfs, ST.t, state.fadeIn||state.fade||0, state.fadeOut||state.fade||0);
+    _ltPreview[id] = level > 0.01;
+  } else {
+    const previewOn = (typeof _ltPreview[id] !== 'undefined') ? _ltPreview[id] : getOnAt(state.kfs,ST.t);
+    level = previewOn ? 1 : 0;
+  }
+  const on=level>0;
+  // 停止中はLS[id].color（ピッカーの現在値）を即反映
+  // 再生中はKFに保存された色を使う（なければLS[id].color）
+  const kfColor = ST.playing ? getColorAt(state.kfs,ST.t) : null;
+  const c=new THREE.Color(kfColor||state.color);
+  const intv=state.intensity/100;
+  entry.spots.forEach(({spot})=>{
+    spot.color.copy(c);
+    spot.intensity=intv*5*level;
+  });
+  // BackSus A/B cone + target
+  if(id==='backSus'||id==='backSusB'){
+    const mode = id==='backSus' ? 'parallel' : 'cross';
+    const H=7.5, D=ST.stD;
+    entry.spots.forEach(({spot,tgt,x,cone,coneLen,sz})=>{
+      const srcZ = sz ?? -D/2+0.2;
+      const tx = mode==='cross' ? -x : x;
+      const ty=0, tz=D/4;
+      tgt.position.set(tx,ty,tz);
+      tgt.updateMatrixWorld(true);
+      spot.target=tgt;
+      if(cone){
+        const sx=x, sy=H;
+        const dir=new THREE.Vector3(tx-sx, ty-sy, tz-srcZ);
+        const len=dir.length();
+        cone.position.set((sx+tx)/2,(sy+ty)/2,(srcZ+tz)/2);
+        cone.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0), dir.clone().negate().normalize());
+        cone.scale.set(1, len/coneLen, 1);
+        cone.material.color.copy(c);
+        cone.material.opacity = 0.11*level;
+      }
+    });
+  }
+  // Button UI (show ON only when fully on, fading is in-between)
+  const btn=document.getElementById('lt-'+id);
+  if(btn){
+    const label=btn.dataset.label||btn.textContent.replace(/ (?:ON|OFF|フェード中)/,'').trim();
+    btn.dataset.label=label;
+    const stateLabel = level<=0?'OFF':level>=1?'ON':'フェード中';
+    btn.textContent=label+' '+stateLabel;
+    btn.className='ltb'+(level>0?' on':'');
+    if(id.startsWith('ss'))btn.className='ltb'+(level>0?' on-y':'');
+  }
+  // Cone opacity for SS and backFoot
+  if(id.startsWith('ss')){
+    entry.spots.forEach(({cone})=>{if(cone){cone.material.color.copy(c);cone.material.opacity=0.12*level;}});
+  }
+  if(id==='backFoot'){
+    entry.spots.forEach(({cone})=>{if(cone){cone.material.color.copy(c);cone.material.opacity=0.10*level;}});
+  }
+  updDash();
+}
+function syncAllLights(){LIGHT_IDS.forEach(syncLight);}
+
+// ── helpers ──
+function getOnAt(kfs,t){
+  let on=false;
+  [...kfs].sort((a,b)=>a.t-b.t).forEach(k=>{if(k.t<=t)on=k.on;}); return on;
+}
+// KF毎の色を取得（colorが設定されていればそれを、なければnull）
+function getColorAt(kfs,t){
+  let color=null;
+  [...kfs].sort((a,b)=>a.t-b.t).forEach(k=>{if(k.t<=t&&k.color)color=k.color;});
+  return color;
+}
+
+// フェード付き強度計算 — 0.0(消灯)〜1.0(全灯)
+// fadeIn: ONになる時の秒数, fadeOut: OFFになる時の秒数
+function getFadeLevel(kfs,t,fadeIn,fadeOut){
+  fadeIn=fadeIn||0; fadeOut=fadeOut||0;
+  if(!fadeIn&&!fadeOut) return getOnAt(kfs,t)?1:0;
+  const sorted=[...kfs].sort((a,b)=>a.t-b.t);
+  let curOn=false,prevOn=false,lastChange=-9999;
+  for(const k of sorted){if(k.t<=t){prevOn=curOn;curOn=k.on;lastChange=k.t;}}
+  const elapsed=t-lastChange;
+  if(curOn){
+    return fadeIn>0?Math.min(1,elapsed/fadeIn):1;
+  } else {
+    if(!prevOn)return 0; // 直前もOFF→フラッシュしない
+    return fadeOut>0?Math.max(0,1-elapsed/fadeOut):0;
+  }
+}
+// ── 照明記録モード ──
+let _lightRecording = false; // 記録中フラグ
+
+function toggleLightRec(){
+  _lightRecording = !_lightRecording;
+  const btn = document.getElementById('lrec-btn');
+  if(_lightRecording){
+    // 記録モードON：現在のKF状態をプレビューに同期してから開始（既存KFを保護）
+    LIGHT_IDS.forEach(id=>{ _ltPreview[id]=getOnAt(LS[id].kfs,ST.t); });
+    LIGHT_IDS.forEach(syncLightPreview);
+    btn.textContent = '🔴 記録中';
+    btn.style.color = '#ff2222';
+    btn.style.borderColor = '#cc0000';
+    btn.style.background = '#1a0000';
+    btn.style.animation = 'pulse 1s infinite';
+    showMode('🔴 照明記録中 — 照明ボタンを押すとKFに記録されます');
+  } else {
+    // 記録モードOFF：プレビューは現在の状態のまま維持
+    btn.textContent = '⚫ 記録OFF';
+    btn.style.color = '#ff4444';
+    btn.style.borderColor = '#661111';
+    btn.style.background = '';
+    btn.style.animation = '';
+    showMode('⚫ 記録停止 — 照明はプレビューのみ（KFに残らない）');
+  }
+}
+
+// プレビュー状態（KFに記録しない現在の表示状態）
+const _ltPreview = {};
+LIGHT_IDS.forEach(id=>{ _ltPreview[id]=false; });
+
+// ltToggle: 記録OFFなら試し押し（KF記録なし）、記録ONなら即KF記録
+function ltToggle(id){
+  _ltPreview[id]=!_ltPreview[id];
+  syncLightPreview(id);
+  if(_lightRecording){
+    const t=Math.round(ST.t*10)/10;
+    const on=_ltPreview[id];
+    const color=LS[id].color; // 現在の色をKFに保存
+    const ex=LS[id].kfs.find(k=>Math.abs(k.t-t)<0.15);
+    if(ex){ ex.on=on; ex.color=color; }
+    else { LS[id].kfs.push({t,on,color}); LS[id].kfs.sort((a,b)=>a.t-b.t); }
+    renderTL();
+  }
+  updDash();
+}
+
+// プレビュー状態をThree.jsに反映
+function syncLightPreview(id){
+  const entry=LG[id]; if(!entry)return;
+  const state=LS[id];
+  const on=_ltPreview[id];
+  // 停止中はLS[id].color（ピッカーの現在値）を即反映
+  const kfColor = ST.playing ? getColorAt(state.kfs,ST.t) : null;
+  const c=new THREE.Color(kfColor||state.color);
+  const intv=state.intensity/100;
+  entry.spots.forEach(({spot})=>{
+    spot.color.copy(c);
+    spot.intensity=on?intv*5:0;
+  });
+  if(id==='backSus'||id==='backSusB'){
+    const mode=id==='backSus'?'parallel':'cross';
+    const H=7.5, D=ST.stD;
+    entry.spots.forEach(({spot,tgt,x,cone,coneLen,sz})=>{
+      const srcZ=sz??-D/2+0.2;
+      const tx=mode==='cross'?-x:x, ty=0, tz=D/4;
+      tgt.position.set(tx,ty,tz); tgt.updateMatrixWorld(true); spot.target=tgt;
+      if(cone){
+        const sx=x, sy=H;
+        const dir=new THREE.Vector3(tx-sx,ty-sy,tz-srcZ);
+        const len=dir.length();
+        cone.position.set((sx+tx)/2,(sy+ty)/2,(srcZ+tz)/2);
+        cone.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),dir.clone().negate().normalize());
+        cone.scale.set(1,len/coneLen,1);
+        cone.material.color.copy(c);
+        cone.material.opacity=on?0.11:0;
+      }
+    });
+  }
+  if(id.startsWith('ss')){
+    entry.spots.forEach(({cone})=>{if(cone){cone.material.color.copy(c);cone.material.opacity=on?0.12:0;}});
+  }
+  if(id==='backFoot'){
+    entry.spots.forEach(({cone})=>{if(cone){cone.material.color.copy(c);cone.material.opacity=on?0.10:0;}});
+  }
+  // UIボタン更新
+  const btn=document.getElementById('lt-'+id);
+  if(btn){
+    const base=btn.dataset.label||btn.textContent.replace(/ ON| OFF/,'').trim();
+    btn.dataset.label=base;
+    btn.textContent=base+(on?' ON':' OFF');
+    btn.className='ltb'+(on?' on':'');
+    if(id.startsWith('ss'))btn.className='ltb'+(on?' on-y':'');
+  }
+}
+
+function kfToggle(kfs,t){
+  const on=getOnAt(kfs,t);
+  const kf=kfs.find(k=>Math.abs(k.t-t)<0.1);
+  if(kf)kf.on=!on; else{kfs.push({t,on:!on});kfs.sort((a,b)=>a.t-b.t);}
+}
+function onLCol(id,v){LS[id].color=v;syncLight(id);}
+function onLColGroup(ids,v){ids.forEach(id=>{LS[id].color=v;syncLight(id);});}
+function onLInt(id,v){LS[id].intensity=v;syncLight(id);}
+function onLIntGroup(ids,v){ids.forEach(id=>{LS[id].intensity=v;syncLight(id);});}
+function onLFade(id,v){
+  LS[id].fade=v;
+  const label=document.getElementById(id.replace(/[A-Z].*/,'').replace('backSus','bs').replace('backFoot','bf').replace('fohUp','foh').replace('fohLo','foh')+'-fadev');
+  // simpler: just update by slider id
+  syncLight(id);
+}
+function onLFadeGroup(ids,v){ids.forEach(id=>{LS[id].fade=v;});ids.forEach(syncLight);}
+function setBSMode(key,m){
+  LS[key].mode=m;syncLight(key);
+  const pre=key==='backSus'?'bs':'bsb';
+  document.getElementById(`lt-${pre}P`).className='ltb'+(m==='parallel'?' on':'');
+  document.getElementById(`lt-${pre}C`).className='ltb'+(m==='cross'?' on':'');
+}
+
+// Color preset factory
+function buildPresets(cid,onPick){
+  const c=document.getElementById(cid); if(!c)return; c.innerHTML='';
+  LCOLS_PRESET.forEach(({n,h})=>{
+    const b=document.createElement('div');b.className='pcp';b.style.background=h;b.title=n;
+    b.onclick=()=>onPick(h);c.appendChild(b);
+  });
+}
+
+// ═══════════════════════════════════════════════════
+// POINTER EVENTS — iOS/Android/PC 完全統一
+// Pointer Events APIでtouch/mouseを一本化、iOSで最も確実
+// ═══════════════════════════════════════════════════
+const _floorPlane = new THREE.Plane(new THREE.Vector3(0,1,0), 0);
+const _floorPt = new THREE.Vector3();
+
+function setRay(cx,cy){
+  const r=document.getElementById('vp').getBoundingClientRect();
+  mu.x=((cx-r.left)/r.width)*2-1;
+  mu.y=-((cy-r.top)/r.height)*2+1;
+  ray.setFromCamera(mu,cam);
+}
+function pickDancer(cx,cy){
+  setRay(cx,cy);
+  const ms=[];
+  Object.values(dMesh).forEach(g=>g.traverse(o=>{if(o.isMesh)ms.push(o);}));
+  const h=ray.intersectObjects(ms,false);
+  if(!h.length)return null;
+  let o=h[0].object;while(o&&!o.userData.did)o=o.parent;
+  return o?o.userData.did:null;
+}
+function pickFloorPt(cx,cy){
+  setRay(cx,cy);
+  if(ray.ray.intersectPlane(_floorPlane,_floorPt)) return {x:_floorPt.x,z:_floorPt.z};
+  return null;
+}
+
+const _ptrs = new Map();
+let _dragDid=null, _dragMoved=false;
+
+function onPD(e){
+  e.preventDefault();
+  try{ e.target.setPointerCapture(e.pointerId); }catch(_){}
+  _ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY});
+
+  if(_ptrs.size===1){
+    tapT=Date.now(); tapX=e.clientX; tapY=e.clientY;
+    lastPt={x:e.clientX,y:e.clientY}; pinchD=0;
+    const did=pickDancer(e.clientX,e.clientY);
+    if(did){
+      selectDancer(did);
+      if(stageLocked) enterMoveMode();
+      _dragDid=did; _dragMoved=false; isDrag=false;
+    } else if(ST.moveMode){
+      const pt=pickFloorPt(e.clientX,e.clientY);
+      if(pt){ placeDancer(pt.x,pt.z); if(stageLocked)enterMoveMode(); tapT=0; return; }
+      _dragDid=null; isDrag=!stageLocked;
+    } else {
+      _dragDid=null; isDrag=!stageLocked;
+    }
+  } else {
+    _dragDid=null; isDrag=false; tapT=0;
+    if(_ptrs.size===2){
+      const pts=[..._ptrs.values()];
+      pinchD=Math.hypot(pts[0].x-pts[1].x,pts[0].y-pts[1].y);
+    }
+  }
+}
+function onPM(e){
+  if(!_ptrs.has(e.pointerId)) return;
+  const prev=_ptrs.get(e.pointerId);
+  _ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY});
+
+  if(_ptrs.size===2&&!stageLocked){
+    const pts=[..._ptrs.values()];
+    const d=Math.hypot(pts[0].x-pts[1].x,pts[0].y-pts[1].y);
+    if(pinchD>0){ camR=clamp(camR-(d-pinchD)*0.04,3,55); updCam(); }
+    pinchD=d; return;
+  }
+  if(_ptrs.size!==1) return;
+
+  if(_dragDid!==null){
+    const pt=pickFloorPt(e.clientX,e.clientY);
+    if(pt){
+      if(Math.abs(e.clientX-tapX)>4||Math.abs(e.clientY-tapY)>4){ _dragMoved=true; tapT=0; }
+      if(_dragMoved) _liveMoveDancer(_dragDid,pt.x,pt.z);
+    }
+  } else if(isDrag&&!stageLocked){
+    const dx=e.clientX-prev.x, dy=e.clientY-prev.y;
+    camTh-=dx*0.009; camPhi=clamp(camPhi+dy*0.009,0.05,Math.PI/2-0.04);
+    updCam();
+    if(Math.abs(e.clientX-tapX)>8||Math.abs(e.clientY-tapY)>8) tapT=0;
+  }
+  lastPt={x:e.clientX,y:e.clientY};
+}
+function onPU(e){
+  if(_ptrs.size===1&&tapT&&Date.now()-tapT<300){
+    const dx=Math.abs(e.clientX-tapX),dy=Math.abs(e.clientY-tapY);
+    if(dx<12&&dy<12&&_dragDid===null&&ST.moveMode){
+      const pt=pickFloorPt(tapX,tapY);
+      if(pt){ placeDancer(pt.x,pt.z); if(stageLocked)enterMoveMode(); }
+    }
+  }
+  if(_dragDid!==null&&_dragMoved){
+    const pt=pickFloorPt(e.clientX,e.clientY);
+    if(pt) placeDancer(pt.x,pt.z);
+  }
+  _ptrs.delete(e.pointerId);
+  if(_ptrs.size===0){ _dragDid=null;_dragMoved=false;isDrag=false;tapT=0;pinchD=0; }
+  else if(_ptrs.size===1){ pinchD=0;const[p]=[..._ptrs.values()];lastPt={x:p.x,y:p.y};tapT=0; }
+}
+function _liveMoveDancer(id,x,z){
+  const maxX=ST.showWing?ST.stW/2+WING_W:ST.stW/2;
+  x=clamp(x,-maxX,maxX); z=clamp(z,-ST.stD/2,ST.stD/2);
+  const g=dMesh[id]; if(g) g.position.set(x,0,z);
+}
+
+// ═══════════════════════════════════════════════════
+// DANCER MANAGEMENT
+// ═══════════════════════════════════════════════════
+function mkDancer(name){
+  return{id:++_did,name:name||`D${_did}`,color:PCOLS[(_did-1)%PCOLS.length],visible:true,
+    kfs:[{t:0,x:(Math.random()-0.5)*ST.stW*0.7,z:(Math.random()-0.5)*ST.stD*0.5}]};
+}
+function addDancer(){
+  const d=mkDancer();ST.dancers.push(d);mkDancerMesh(d);renderLeft();selectDancer(d.id);
+}
+function removeSel(){
+  if(!ST.selId)return;
+  rmDancerMesh(ST.selId);ST.dancers=ST.dancers.filter(d=>d.id!==ST.selId);
+  ST.selId=null;renderLeft();renderProps();updDash();
+}
+function toggleVis(id){
+  const d=ST.dancers.find(d=>d.id===id);if(!d)return;
+  d.visible=!d.visible;syncDancer(d);
+  const el=document.querySelector(`.di[data-did="${id}"] .dvis`);
+  if(el)el.textContent=d.visible?'👁':'—';
+}
+
+// KEY FIX: selectDancer does NOT call renderLeft() — only updates CSS
+function selectDancer(id){
+  ST.selId=id;ST.moveMode=false;
+  document.getElementById('movetip').style.display='none';
+  document.querySelectorAll('.di').forEach(el=>{
+    el.classList.toggle('sel',el.dataset.did==id);
+  });
+  ST.dancers.forEach(syncDancer);
+  renderProps();renderTL();updDash();
+}
+function enterMoveMode(){
+  if(!ST.selId)return;
+  ST.moveMode=true;
+  document.getElementById('movetip').style.display='block';
+}
+function placeDancer(x,z){
+  const d=ST.dancers.find(d=>d.id===ST.selId);if(!d)return;
+  // Allow wing area placement
+  const maxX=ST.showWing?ST.stW/2+WING_W:ST.stW/2;
+  x=clamp(x,-maxX,maxX);z=clamp(z,-ST.stD/2,ST.stD/2);
+  let kf=d.kfs.find(k=>Math.abs(k.t-ST.t)<0.12);
+  if(kf){kf.x=x;kf.z=z;}else{d.kfs.push({t:ST.t,x,z});d.kfs.sort((a,b)=>a.t-b.t);}
+  ST.moveMode=false;
+  document.getElementById('movetip').style.display='none';
+  syncDancer(d);renderTL();renderProps();updDash();
+  // Update wing badge without full re-render
+  const badge=document.querySelector(`.di[data-did="${d.id}"] .wing-badge`);
+  if(badge){const inW=Math.abs(x)>ST.stW/2;badge.classList.toggle('in-wing',inW);badge.textContent=inW?'袖':'舞';}
+}
+function setDCoord(id,axis,v){
+  const d=ST.dancers.find(d=>d.id===id);if(!d)return;
+  let kf=d.kfs.find(k=>Math.abs(k.t-ST.t)<0.12);
+  if(!kf){const p=interpPos(d,ST.t);kf={t:ST.t,x:p.x,z:p.z};d.kfs.push(kf);d.kfs.sort((a,b)=>a.t-b.t);}
+  kf[axis]=parseFloat(v);syncDancer(d);renderTL();updDash();
+}
+
+// ═══════════════════════════════════════════════════
+// UI RENDERS
+// ═══════════════════════════════════════════════════
+// renderLeft creates the list; selectDancer does NOT call it
+function renderLeft(){
+  const el=document.getElementById('dancer-list');el.innerHTML='';
+  ST.dancers.forEach(d=>{
+    const row=document.createElement('div');
+    row.className='di'+(d.id===ST.selId?' sel':'');
+    row.dataset.did=d.id;
+    row.onclick=(e)=>{
+      // only select if clicking row background (not child input)
+      if(e.target===row||e.target.classList.contains('dvis')||e.target.classList.contains('wing-badge'))
+        selectDancer(d.id);
+    };
+    // Color swatch
+    const sw=document.createElement('div');
+    sw.className='dc';sw.style.background=d.color;sw.title='色変更';
+    sw.onclick=e=>{e.stopPropagation();openColorPicker(d.id,sw);};
+    // Name — inline editable, does NOT trigger selectDancer re-render
+    const nm=document.createElement('input');
+    nm.className='dname';nm.type='text';nm.value=d.name;
+    nm.addEventListener('focus',e=>{e.stopPropagation();selectDancer(d.id);});
+    nm.addEventListener('click',e=>e.stopPropagation());
+    nm.addEventListener('change',e=>{d.name=e.target.value;updDash();});
+    nm.addEventListener('keydown',e=>{if(e.key==='Enter')nm.blur();});
+    // Wing badge
+    const wb=document.createElement('span');
+    wb.className='wing-badge';
+    const pos=interpPos(d,ST.t);
+    const inW=Math.abs(pos.x)>ST.stW/2;
+    wb.classList.toggle('in-wing',inW);wb.textContent=inW?'袖':'舞';
+    // Vis toggle
+    const vis=document.createElement('span');
+    vis.className='dvis';vis.textContent=d.visible?'👁':'—';
+    vis.onclick=e=>{e.stopPropagation();toggleVis(d.id);};
+    row.append(sw,nm,wb,vis);el.appendChild(row);
+  });
+}
+function openColorPicker(id,swEl){
+  const cp=document.createElement('input');cp.type='color';
+  const d=ST.dancers.find(x=>x.id===id);if(!d)return;
+  cp.value=d.color;
+  cp.addEventListener('input',e=>{d.color=e.target.value;swEl.style.background=d.color;syncDancer(d);});
+  cp.click();
+}
+function renderProps(){
+  const p=document.getElementById('proparea');
+  const d=ST.dancers.find(d=>d.id===ST.selId);
+  if(!p)return;
+  if(!d){p.innerHTML='<div style="font-size:10px;color:#7777aa;padding:5px 8px">ダンサーを選択してください</div>';return;}
+  const pos=interpPos(d,ST.t);
+  const inW=Math.abs(pos.x)>ST.stW/2;
+  p.innerHTML=`<div style="padding:5px 8px">
+<div style="font-size:11px;color:#5566aa;margin-bottom:4px">${d.name} ${inW?'<span style="color:#667722;font-size:9px">袖待機中</span>':''}</div>
+<div style="display:flex;gap:4px">
+  <div style="flex:1"><label class="rl">X (m)</label><input class="ri" type="number" value="${pos.x.toFixed(2)}" step="0.1" style="-webkit-user-select:text;user-select:text" onchange="setDCoord(${d.id},'x',this.value)"></div>
+  <div style="flex:1"><label class="rl">Z (m)</label><input class="ri" type="number" value="${pos.z.toFixed(2)}" step="0.1" style="-webkit-user-select:text;user-select:text" onchange="setDCoord(${d.id},'z',this.value)"></div>
+</div>
+<div style="margin-top:5px">
+  <button class="pb" style="display:block;text-align:center;padding:5px;font-size:10px" onclick="enterMoveMode()">🎯 タップして移動</button>
+</div>
+<div style="margin-top:3px;font-size:9px;color:#7777aa">KF: ${d.kfs.length} 個</div>
+</div>`;
+}
+
+// I need to put proparea in the right panel — let me add it
+// (it's included via right panel markup, but I'll add a dynamic insert)
+
+function updDash(){
+  const d=ST.dancers.find(d=>d.id===ST.selId);
+  document.getElementById('d-name').textContent=d?d.name:'—';
+  if(d){const p=interpPos(d,ST.t);document.getElementById('d-pos').textContent=`X:${p.x.toFixed(1)}  Z:${p.z.toFixed(1)}`;}
+  else document.getElementById('d-pos').textContent='未選択';
+  const onList=[];
+  LIGHT_IDS.forEach(id=>{if(getOnAt(LS[id].kfs,ST.t))onList.push(id);});
+  const susOn=ST.susLights.filter(l=>getOnAt(l.kfs,ST.t)).length;
+  if(susOn)onList.push(`サス×${susOn}`);
+  document.getElementById('d-lights').textContent=onList.length?onList.join(' '):' なし';
+  document.getElementById('d-lights').style.color=onList.length?'#6688ff':'#1e1e3a';
+  document.getElementById('d-stage').textContent=`${ST.stW}×${ST.stD}m  H:${ST.stH}m`;
+}
+
+// ── LABELS ──
+function updLabels(){
+  const cont=document.getElementById('labels');cont.innerHTML='';
+  const r=ren.domElement.getBoundingClientRect();
+  const W=r.width,H=r.height;
+  ST.dancers.forEach(d=>{
+    if(!d.visible||!dMesh[d.id])return;
+    const g=dMesh[d.id];
+    const hp=new THREE.Vector3(g.position.x,1.9,g.position.z);
+    const pr=hp.project(cam);
+    if(pr.z>1||pr.z<-1)return;
+    const sx=(pr.x*0.5+0.5)*W,sy=(-pr.y*0.5+0.5)*H;
+    if(sx<-20||sx>W+20||sy<-20||sy>H+20)return;
+    const lbl=document.createElement('div');
+    lbl.className='dlbl';lbl.style.left=sx+'px';lbl.style.top=sy+'px';
+    lbl.style.borderLeftColor=d.color;lbl.textContent=d.name;
+    cont.appendChild(lbl);
+  });
+  // Ken labels at front edge
+  if(ST.showKen){
+    const maxK=Math.ceil(ST.stW/2/KEN)+1;
+    for(let k=-maxK;k<=maxK;k++){
+      const x=k*KEN;if(Math.abs(x)>ST.stW/2+0.01)continue;
+      const pr=new THREE.Vector3(x,0.15,ST.stD/2).project(cam);
+      if(pr.z>1)continue;
+      const sx=(pr.x*0.5+0.5)*W,sy=(-pr.y*0.5+0.5)*H;
+      if(sx<0||sx>W||sy<0||sy>H)continue;
+      const lbl=document.createElement('div');
+      lbl.className='klbl';lbl.style.left=sx+'px';lbl.style.top=sy+'px';
+      lbl.textContent=k<0?`上${Math.abs(k)}`:k>0?`下${k}`:'0';
+      cont.appendChild(lbl);
+    }
+  }
+  // Wing labels
+  if(ST.showWing){
+    const labelWing=(x,txt)=>{
+      const pr=new THREE.Vector3(x,0.1,0).project(cam);
+      if(pr.z>1)return;
+      const sx=(pr.x*0.5+0.5)*W,sy=(-pr.y*0.5+0.5)*H;
+      const lbl=document.createElement('div');
+      lbl.className='wlbl';lbl.style.left=sx+'px';lbl.style.top=sy+'px';
+      lbl.textContent=txt;cont.appendChild(lbl);
+    };
+    labelWing(-(ST.stW/2+WING_W/2),'下手袖');
+    labelWing( ST.stW/2+WING_W/2,'上手袖');
+  }
+}
+
+// ═══════════════════════════════════════════════════
+// TIMELINE
+// ═══════════════════════════════════════════════════
+const fmt=s=>{
+  const m=Math.floor(s/60);
+  const sc=Math.floor(s%60);
+  const ds=Math.floor((s%1)*10);
+  return`${m}:${sc.toString().padStart(2,'0')}.${ds}`;
+};;
+function renderTL(){
+  const pct=ST.t/ST.dur;
+  document.getElementById('timedsp').textContent=fmt(ST.t);
+
+  // ズーム: 表示範囲 = tlOffset 〜 tlOffset + ST.dur/tlZoom
+  const viewLen=ST.dur/tlZoom;
+  // 現在時刻が表示範囲に入るようにオフセット調整
+  if(ST.t < tlOffset) tlOffset=ST.t;
+  if(ST.t > tlOffset+viewLen) tlOffset=ST.t-viewLen;
+  tlOffset=clamp(tlOffset,0,ST.dur-viewLen);
+
+  // 時刻→表示%変換（ズーム対応）
+  const t2p=t=>clamp((t-tlOffset)/viewLen*100,0,100);
+
+  document.getElementById('prog-pos').style.width=t2p(ST.t)+'%';
+  document.getElementById('head').style.left=t2p(ST.t)+'%';
+  document.getElementById('waveprog').style.width=pct*100+'%';
+
+  // ズームラベル更新
+  const zv=document.getElementById('tlzoomv');
+  if(zv)zv.textContent='×'+tlZoom;
+
+  // ルーラー
+  const ruler=document.getElementById('ruler');ruler.innerHTML='';
+  const iv=ST.dur>240?60:ST.dur>120?30:15;
+  for(let tt=0;tt<=ST.dur;tt+=iv){
+    const left=t2p(tt);
+    if(left<0||left>100)continue;
+    const tk=document.createElement('div');tk.className='rtick';tk.style.left=left+'%';tk.textContent=fmt(tt);ruler.appendChild(tk);
+  }
+
+  // ── 上段：ダンサー位置KFマーカー ──
+  const isLight=document.body.classList.contains('light-panel');
+  const kfPos=document.getElementById('kflayer-pos');kfPos.innerHTML='';
+
+  // ── ヘルパー：バーの座標→時刻 ──
+  const barT=(el,cx)=>{
+    const r=el.getBoundingClientRect();
+    const viewLen=ST.dur/tlZoom;
+    return Math.round(clamp(tlOffset+(cx-r.left)/r.width*viewLen,0,ST.dur)*10)/10;
+  };
+
+  // ── 上段：位置KFマーカー ──
+  const posBar=document.getElementById('scrub-pos');
+  const sel=ST.dancers.find(d=>d.id===ST.selId);
+
+  // 空きエリアドラッグ = 延長
+  kfPos.style.pointerEvents='all';
+  kfPos.onpointerdown=e=>{
+    if(e.target!==kfPos&&e.target.dataset.kfm)return;
+    e.stopPropagation();
+    if(!sel||!sel.kfs.length)return;
+    const startT=barT(posBar,e.clientX);
+    let moved=false;
+    const refKF=([...sel.kfs].filter(k=>k.t<=startT+0.5).sort((a,b)=>b.t-a.t)[0])||sel.kfs[0];
+    const line=document.createElement('div');
+    line.style.cssText=`position:absolute;top:0;width:2px;height:100%;background:${sel.color};opacity:.7;pointer-events:none;left:${t2p(startT)}%`;
+    kfPos.appendChild(line);
+    kfPos.setPointerCapture(e.pointerId);
+    kfPos.onpointermove=ev=>{if(Math.abs(ev.clientX-e.clientX)>3)moved=true;line.style.left=t2p(barT(posBar,ev.clientX))+'%';};
+    kfPos.onpointerup=ev=>{
+      kfPos.onpointermove=null;kfPos.onpointerup=null;kfPos.removeChild(line);
+      const newT=barT(posBar,ev.clientX);
+      if(!moved){seekTo(newT);return;}
+      if(Math.abs(newT-refKF.t)<0.2)return;
+      const ex=sel.kfs.find(k=>Math.abs(k.t-newT)<0.2);
+      if(ex){ex.x=refKF.x;ex.z=refKF.z;}
+      else{sel.kfs.push({t:newT,x:refKF.x,z:refKF.z});sel.kfs.sort((a,b)=>a.t-b.t);}
+      renderTL();syncDancer(sel);
+      showMode(`↔ ${sel.name}: ${fmt(refKF.t)} の位置を ${fmt(newT)} まで延長`);
+    };
+  };
+
+  // マーカー（◆）= クリック→シーク、ドラッグ→KF移動
+  if(sel)sel.kfs.forEach(kf=>{
+    const m=document.createElement('div');
+    m.dataset.kfm='1';
+    m.style.cssText=`position:absolute;top:50%;left:${t2p(kf.t)}%;width:13px;height:13px;transform:translate(-50%,-50%) rotate(45deg);background:${sel.color};border:2px solid rgba(255,255,255,.85);box-shadow:0 0 6px ${sel.color}99;cursor:grab;pointer-events:all;z-index:3`;
+    m.title=`${fmt(kf.t)} の位置KF\nドラッグ→この時刻を移動`;
+    let _d=false,_sx=0;
+    m.addEventListener('pointerdown',e=>{e.stopPropagation();e.preventDefault();m.setPointerCapture(e.pointerId);_d=false;_sx=e.clientX;m.style.cursor='grabbing';seekTo(kf.t);});
+    m.addEventListener('pointermove',e=>{if(Math.abs(e.clientX-_sx)>3)_d=true;if(!_d)return;e.stopPropagation();m.style.left=t2p(barT(posBar,e.clientX))+'%';});
+    m.addEventListener('pointerup',e=>{
+      e.stopPropagation();m.style.cursor='grab';if(!_d)return;
+      const newT=barT(posBar,e.clientX);
+      if(Math.abs(newT-kf.t)<0.1)return;
+      const oi=sel.kfs.indexOf(kf);if(oi>=0)sel.kfs.splice(oi,1);
+      const ex=sel.kfs.find(k=>Math.abs(k.t-newT)<0.2);
+      if(ex){ex.x=kf.x;ex.z=kf.z;}else{sel.kfs.push({t:newT,x:kf.x,z:kf.z});sel.kfs.sort((a,b)=>a.t-b.t);}
+      renderTL();syncDancer(sel);showMode(`◆ KF移動: ${fmt(kf.t)} → ${fmt(newT)}`);_d=false;
+    });
+    kfPos.appendChild(m);
+  });
+
+  // ── 下段：照明KFマーカー ──
+  const ltBar=document.getElementById('scrub-lt');
+  const kfLt=document.getElementById('kflayer-lt');kfLt.innerHTML='';
+  const lCols=isLight
+    ? {backSus:'#1133bb',backSusB:'#0033aa',backFoot:'#0055aa',fohUp:'#333',fohLo:'#555',
+       ss1LU:'#886600',ss1LL:'#886600',ss1RU:'#886600',ss1RL:'#886600',
+       ss2LU:'#aa5500',ss2LL:'#aa5500',ss2RU:'#aa5500',ss2RL:'#aa5500'}
+    : {backSus:'#8888ff',backSusB:'#4499ff',backFoot:'#66ccff',fohUp:'#ffffff',fohLo:'#ccccff',
+       ss1LU:'#ffcc44',ss1LL:'#ffcc44',ss1RU:'#ffcc44',ss1RL:'#ffcc44',
+       ss2LU:'#ffaa22',ss2LL:'#ffaa22',ss2RU:'#ffaa22',ss2RL:'#ffaa22'};
+  const ltBorder=isLight?'rgba(0,0,0,.3)':'rgba(255,255,255,.5)';
+
+  // 空きエリアドラッグ = 照明KF延長
+  kfLt.style.pointerEvents='all';
+  kfLt.onpointerdown=e=>{
+    if(e.target!==kfLt&&e.target.dataset.kfm)return;
+    e.stopPropagation();
+    const startT=barT(ltBar,e.clientX);
+    let moved=false;
+    const line=document.createElement('div');
+    line.style.cssText=`position:absolute;top:0;width:2px;height:100%;background:#ffaa33;opacity:.7;pointer-events:none;left:${t2p(startT)}%`;
+    kfLt.appendChild(line);
+    kfLt.setPointerCapture(e.pointerId);
+    kfLt.onpointermove=ev=>{if(Math.abs(ev.clientX-e.clientX)>3)moved=true;line.style.left=t2p(barT(ltBar,ev.clientX))+'%';};
+    kfLt.onpointerup=ev=>{
+      kfLt.onpointermove=null;kfLt.onpointerup=null;kfLt.removeChild(line);
+      const newT=barT(ltBar,ev.clientX);
+      if(!moved){seekTo(newT);return;}
+      if(Math.abs(newT-startT)<0.2)return;
+      LIGHT_IDS.forEach(id=>{
+        const on=getOnAt(LS[id].kfs,startT);
+        const ex=LS[id].kfs.find(k=>Math.abs(k.t-newT)<0.2&&k.t!==0);
+        if(ex)ex.on=on;else{LS[id].kfs.push({t:newT,on});LS[id].kfs.sort((a,b)=>a.t-b.t);}
+      });
+      ST.susLights.forEach(l=>{
+        const on=getOnAt(l.kfs,startT);
+        const ex=l.kfs.find(k=>Math.abs(k.t-newT)<0.2&&k.t!==0);
+        if(ex)ex.on=on;else{l.kfs.push({t:newT,on});l.kfs.sort((a,b)=>a.t-b.t);}
+      });
+      renderTL();showMode(`💡 照明: ${fmt(startT)} の状態を ${fmt(newT)} まで延長`);
+    };
+  };
+
+  // 照明マーカー = クリック→シーク、ドラッグ→KF移動
+  LIGHT_IDS.forEach(id=>{
+    LS[id].kfs.forEach(kf=>{
+      if(kf.t===0&&!kf.on)return;
+      const m=document.createElement('div');
+      m.dataset.kfm='1';
+      m.style.cssText=`position:absolute;top:50%;left:${t2p(kf.t)}%;width:10px;height:10px;transform:translate(-50%,-50%) rotate(45deg);background:${lCols[id]||'#ffaa33'};border:1px solid ${ltBorder};cursor:grab;pointer-events:all;z-index:3`;
+      m.title=`💡 ${id} @ ${fmt(kf.t)}\nドラッグ→移動 ダブルクリック→削除`;
+      let _d=false,_sx=0;
+      m.addEventListener('pointerdown',e=>{e.stopPropagation();e.preventDefault();m.setPointerCapture(e.pointerId);_d=false;_sx=e.clientX;m.style.cursor='grabbing';seekTo(kf.t);});
+      m.addEventListener('pointermove',e=>{if(Math.abs(e.clientX-_sx)>3)_d=true;if(!_d)return;e.stopPropagation();m.style.left=t2p(barT(ltBar,e.clientX))+'%';});
+      m.addEventListener('pointerup',e=>{
+        e.stopPropagation();m.style.cursor='grab';if(!_d)return;
+        const newT=barT(ltBar,e.clientX);if(Math.abs(newT-kf.t)<0.1)return;
+        const oi=LS[id].kfs.indexOf(kf);if(oi>=0)LS[id].kfs.splice(oi,1);
+        const ex=LS[id].kfs.find(k=>Math.abs(k.t-newT)<0.2&&k.t!==0);
+        if(ex)ex.on=kf.on;else{LS[id].kfs.push({t:newT,on:kf.on});LS[id].kfs.sort((a,b)=>a.t-b.t);}
+        renderTL();showMode(`💡 照明KF移動: ${fmt(kf.t)} → ${fmt(newT)}`);_d=false;
+      });
+      m.ondblclick=e=>{e.stopPropagation();delLightKF(id,kf.t);};
+      kfLt.appendChild(m);
+    });
+  });
+  const susCol=isLight?'#aa6600':'#ffaa33';
+  ST.susLights.forEach(l=>l.kfs.forEach(kf=>{
+    if(kf.t===0&&!kf.on)return;
+    const m=document.createElement('div');
+    m.dataset.kfm='1';
+    m.style.cssText=`position:absolute;top:50%;left:${t2p(kf.t)}%;width:8px;height:8px;transform:translate(-50%,-50%) rotate(45deg);background:${susCol};border:1px solid ${ltBorder};cursor:pointer;pointer-events:all;z-index:3`;
+    m.title=`💡サス @ ${fmt(kf.t)} ダブルクリック→削除`;
+    m.onclick=e=>{e.stopPropagation();seekTo(kf.t);};
+    m.ondblclick=e=>{e.stopPropagation();delSusKF(l,kf.t);};
+    kfLt.appendChild(m);
+  }));
+}
+
+function seekTo(t){
+  ST.t=clamp(t,0,ST.dur);
+  const aud=document.getElementById('aud');
+  if(aud.src&&aud.readyState>=1)aud.currentTime=ST.t;
+  // プレビュー状態とカラーをKFの状態に同期（シーク時）
+  LIGHT_IDS.forEach(id=>{
+    _ltPreview[id]=getOnAt(LS[id].kfs,ST.t);
+    // KFに色が設定されていれば色ピッカーとLS[id].colorも更新
+    const kfColor=getColorAt(LS[id].kfs,ST.t);
+    if(kfColor){
+      LS[id].color=kfColor;
+      const picker=document.getElementById({backSus:'bs-col',backSusB:'bsb-col',backFoot:'bf-col',
+        fohUp:'foh-col',fohLo:'foh-col'}[id]||('lt-col-'+id));
+      if(picker)picker.value=kfColor;
+    }
+  });
+  LIGHT_IDS.forEach(syncLightPreview);
+  renderTL();syncAll();renderProps();updDash();updSusUI();
+}
+function addKF(){
+  const d=ST.dancers.find(d=>d.id===ST.selId);
+  if(!d){ showMode('⚠ ダンサーを選択してください'); return; }
+
+  // 再生中は一時停止してから追加（時刻ズレ防止）
+  if(ST.playing) togglePlay();
+
+  // 時刻を0.1秒単位に丸める（重複KFの原因を防ぐ）
+  const t = Math.round(ST.t * 10) / 10;
+  seekTo(t); // 丸めた時刻に合わせる
+
+  const p = interpPos(d, t);
+
+  // 重複チェックは0.3秒以内（丸め誤差を吸収）
+  const existing = d.kfs.find(k => Math.abs(k.t - t) < 0.3);
+  if(existing){
+    showMode(`⚠ ${fmt(t)} 付近にすでにKFがあります`);
+    return;
+  }
+
+  d.kfs.push({t, x:p.x, z:p.z});
+  d.kfs.sort((a,b)=>a.t-b.t);
+
+  renderTL(); syncAll();
+
+  // ビジュアルフィードバック — スクラブヘッドを一瞬光らせる
+  const head=document.getElementById('head');
+  head.style.background='#33ff99';
+  head.style.boxShadow='0 0 12px #33ff99';
+  setTimeout(()=>{head.style.background='';head.style.boxShadow='';},500);
+
+  showMode(`✓ KF追加: ${d.name} @ ${fmt(t)}`);
+}
+function delKF(){
+  const d=ST.dancers.find(d=>d.id===ST.selId);
+  if(!d||d.kfs.length<2){ showMode('⚠ KFが1つ以下のため削除できません'); return; }
+  // 現在時刻に最も近いKFを探す（固定許容ではなく最近傍）
+  let best=-1, bestDist=Infinity;
+  d.kfs.forEach((k,i)=>{
+    const dist=Math.abs(k.t-ST.t);
+    if(dist<bestDist){bestDist=dist;best=i;}
+  });
+  if(best<0||bestDist>2){ showMode(`⚠ ${fmt(ST.t)} 付近にKFが見つかりません`); return; }
+  const removed=d.kfs[best];
+  d.kfs.splice(best,1);
+  renderTL(); syncAll();
+  showMode(`✓ KF削除: ${d.name} @ ${fmt(removed.t)}`);
+}
+
+// ── キーボードショートカット ──
+document.addEventListener('keydown', e=>{
+  // 名前入力中はスキップ
+  if(e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA') return;
+
+  switch(e.key){
+    case 'Delete':
+    case 'Backspace':
+      removeSel();
+      e.preventDefault();
+      break;
+    case 'k': case 'K':
+      addKF();
+      e.preventDefault();
+      break;
+    case ' ':
+      togglePlay();
+      e.preventDefault();
+      break;
+    // 矢印キーで選択ダンサーを微移動 (0.1m単位)
+    case 'ArrowLeft':
+      nudgeDancer(-0.1, 0); e.preventDefault(); break;
+    case 'ArrowRight':
+      nudgeDancer( 0.1, 0); e.preventDefault(); break;
+    case 'ArrowUp':
+      nudgeDancer(0, -0.1); e.preventDefault(); break;
+    case 'ArrowDown':
+      nudgeDancer(0,  0.1); e.preventDefault(); break;
+  }
+});
+
+function nudgeDancer(dx, dz){
+  const d=ST.dancers.find(d=>d.id===ST.selId); if(!d) return;
+  const pos=interpPos(d, ST.t);
+  let kf=d.kfs.find(k=>Math.abs(k.t-ST.t)<0.3);
+  if(!kf){kf={t:Math.round(ST.t*10)/10, x:pos.x, z:pos.z}; d.kfs.push(kf); d.kfs.sort((a,b)=>a.t-b.t);}
+  kf.x=clamp(kf.x+dx, -ST.stW/2, ST.stW/2);
+  kf.z=clamp(kf.z+dz, -ST.stD/2, ST.stD/2);
+  syncDancer(d); renderProps();
+}
+// コピー: 全ダンサーの現在位置をスナップショットとして保存
+// ペースト: 保存した位置を現在時刻のKFとして貼り付け
+let _kfSnapshot = null; // {dancerId: {x, z}, ...}
+let tlZoom = 1;         // タイムラインズーム倍率
+let tlOffset = 0;       // ズーム時の表示開始位置（秒）
+
+// ── 照明KF削除 ──
+// ── 全KFリセット ──
+// ── 立ち位置KFリセット ──
+// ── 立ち位置KFリセット：完全クリア ──
+function resetAllKF(){
+  if(!confirm('全ダンサーの立ち位置KFを完全リセットします。\nすべてのKFが削除され、現在位置だけがt=0に残ります。')) return;
+  ST.dancers.forEach(d=>{
+    const p=interpPos(d,ST.t);
+    d.kfs=[{t:0,x:p.x,z:p.z}];  // t=0の1点だけ残す
+  });
+  ST.t=0;
+  ST.dancers.forEach(syncDancer);
+  renderTL();
+  showMode('🗑 立ち位置KFリセット完了 — t=0に現在位置のみ残しました');
+}
+
+// ── 照明KFリセット：完全クリア＋即全消灯 ──
+function resetLightKF(){
+  if(!confirm('照明のKFをすべて完全リセットします。\n全照明が即座にOFFになります。')) return;
+
+  // KFを完全クリア（t=0のOFFのみ）
+  LIGHT_IDS.forEach(id=>{ LS[id].kfs=[{t:0,on:false}]; });
+  ST.susLights.forEach(l=>{ l.kfs=[{t:0,on:false}]; });
+
+  // プレビュー状態もOFFにリセット
+  LIGHT_IDS.forEach(id=>{ _ltPreview[id]=false; });
+
+  // Three.js スポットを直接0にする（フェード無視）
+  LIGHT_IDS.forEach(id=>{
+    const entry=LG[id]; if(!entry)return;
+    entry.spots.forEach(s=>{
+      if(s.spot) s.spot.intensity=0;
+      if(s.cone) s.cone.material.opacity=0;
+    });
+  });
+  // サスも直接消灯
+  Object.values(susMeshes).forEach(m=>{
+    if(!m) return;
+    m.g.visible=false;
+    m.spot.intensity=0;
+    if(m.cone) m.cone.material.opacity=0;
+    if(m.fc)   m.fc.material.opacity=0;
+  });
+
+  // UIボタン全部OFFに
+  LIGHT_IDS.forEach(id=>{
+    const btn=document.getElementById('lt-'+id); if(!btn)return;
+    const base=btn.dataset.label||btn.textContent.replace(/ ON| OFF/,'').trim();
+    btn.dataset.label=base;
+    btn.textContent=base+' OFF';
+    btn.className='ltb';
+  });
+  updSusUI();
+
+  // 記録モードもOFFに
+  if(_lightRecording){ _lightRecording=false;
+    const rb=document.getElementById('lrec-btn');
+    if(rb){rb.textContent='⚫ 記録OFF';rb.style.color='#ff4444';rb.style.borderColor='#661111';rb.style.background='';rb.style.animation='';}
+  }
+
+  ST.t=0;
+  renderTL();
+  showMode('🗑 照明KFリセット完了 — 全消灯・記録モード停止');
+}
+// ── KFフルリセット ──
+function confirmResetKF(){
+  const choice=confirm('⚠ KFリセット\n\nOK → 全ダンサー＋全照明のKFを削除\nキャンセル → 選択ダンサーのKFだけ削除');
+  if(choice){
+    ST.dancers.forEach(d=>{
+      const p=interpPos(d,0);
+      d.kfs=[{t:0,x:p.x,z:p.z}];
+    });
+    LIGHT_IDS.forEach(id=>{LS[id].kfs=[{t:0,on:false}];});
+    ST.susLights.forEach(l=>{l.kfs=[{t:0,on:false}];});
+    syncAll();syncAllLights();updSusUI();renderTL();
+    showMode('✓ 全KFをリセットしました');
+  } else {
+    const d=ST.dancers.find(d=>d.id===ST.selId);
+    if(!d){showMode('⚠ ダンサーを選択してください');return;}
+    const p=interpPos(d,0);
+    d.kfs=[{t:0,x:p.x,z:p.z}];
+    syncDancer(d);renderTL();
+    showMode(`✓ ${d.name} のKFをリセットしました`);
+  }
+}
+
+function delLightKF(id,t){
+  const state=LS[id];if(!state)return;
+  if(Math.abs(t)<0.01){
+    // t=0はOFFにリセット（削除はしない）
+    state.kfs.find(k=>k.t===0).on=false;
+    _ltPreview[id]=false; syncLightPreview(id);
+    renderTL();showMode(`✓ ${id} t=0をOFFにリセット`);return;
+  }
+  const i=state.kfs.findIndex(k=>Math.abs(k.t-t)<0.15&&k.t!==0);
+  if(i<0)return;
+  state.kfs.splice(i,1);
+  _ltPreview[id]=getOnAt(state.kfs,ST.t); syncLightPreview(id);
+  renderTL();updDash();
+  showMode(`✓ 照明KF削除: ${id} @ ${fmt(t)}`);
+}
+function delSusKF(l,t){
+  if(Math.abs(t)<0.01){l.kfs.find(k=>k.t===0).on=false;syncSusMesh(l);updSusUI();renderTL();return;}
+  const i=l.kfs.findIndex(k=>Math.abs(k.t-t)<0.15&&k.t!==0);
+  if(i<0)return;
+  l.kfs.splice(i,1);syncSusMesh(l);updSusUI();renderTL();
+  showMode(`✓ サスKF削除 @ ${fmt(t)}`);
+}
+
+// ── 照明KF追加ボタン：現在の全照明ON/OFF状態を記録 ──
+function addLightKF(){
+  if(ST.playing) togglePlay();
+  const t=Math.round(ST.t*10)/10;
+  // プレビュー状態と現在の色をKFとして記録
+  LIGHT_IDS.forEach(id=>{
+    const on=_ltPreview[id];
+    const color=LS[id].color; // 現在の色も保存
+    const ex=LS[id].kfs.find(k=>Math.abs(k.t-t)<0.3&&k.t!==0);
+    if(ex){ex.on=on;ex.color=color;}
+    else{LS[id].kfs.push({t,on,color});LS[id].kfs.sort((a,b)=>a.t-b.t);}
+  });
+  ST.susLights.forEach(l=>{
+    const on=getOnAt(l.kfs,ST.t);
+    const ex=l.kfs.find(k=>Math.abs(k.t-t)<0.3&&k.t!==0);
+    if(ex)ex.on=on;else{l.kfs.push({t,on});l.kfs.sort((a,b)=>a.t-b.t);}
+  });
+  renderTL();showMode(`💡 照明KF記録 @ ${fmt(t)} — プレビュー状態と色を保存`);
+}
+
+// ── 照明KF削除ボタン：現在時刻付近の照明KFをまとめて削除 ──
+function delLightKFAtCurrent(){
+  let removed=0;
+  LIGHT_IDS.forEach(id=>{
+    const kfs=LS[id].kfs;
+    // 最近傍KFを探す（t=0も含む）
+    let best=null,bestD=Infinity;
+    kfs.forEach(k=>{const d=Math.abs(k.t-ST.t);if(d<bestD){bestD=d;best=k;}});
+    if(!best||bestD>2)return;
+    if(best.t===0){
+      // t=0のKFは削除ではなくOFFにリセット
+      best.on=false;removed++;
+    } else {
+      const i=kfs.indexOf(best);if(i>=0){kfs.splice(i,1);removed++;}
+    }
+  });
+  ST.susLights.forEach(l=>{
+    let best=null,bestD=Infinity;
+    l.kfs.forEach(k=>{const d=Math.abs(k.t-ST.t);if(d<bestD){bestD=d;best=k;}});
+    if(!best||bestD>2)return;
+    if(best.t===0){best.on=false;removed++;}
+    else{const i=l.kfs.indexOf(best);if(i>=0){l.kfs.splice(i,1);removed++;}}
+  });
+  // プレビューもKF状態に同期
+  LIGHT_IDS.forEach(id=>{_ltPreview[id]=getOnAt(LS[id].kfs,ST.t);});
+  LIGHT_IDS.forEach(syncLightPreview);
+  syncAllLights();updSusUI();renderTL();
+  showMode(removed>0?`💡 照明KF削除 ${removed}件 @ ${fmt(ST.t)}`:`⚠ 付近に照明KFなし`);
+}
+
+// ── 照明コピペ ──
+let _lightSnap=null;
+function copyLightKF(){
+  _lightSnap={ls:{},sus:[]};
+  LIGHT_IDS.forEach(id=>{_lightSnap.ls[id]=getOnAt(LS[id].kfs,ST.t);});
+  ST.susLights.forEach(l=>{_lightSnap.sus.push({id:l.id,on:getOnAt(l.kfs,ST.t)});});
+  const pb=document.getElementById('lpastebtn');
+  if(pb){pb.style.opacity='1';pb.style.pointerEvents='auto';}
+  showMode(`💡 照明状態をコピー @ ${fmt(ST.t)}`);
+}
+function pasteLightKF(){
+  if(!_lightSnap)return;
+  const t=Math.round(ST.t*10)/10;
+  LIGHT_IDS.forEach(id=>{
+    const on=_lightSnap.ls[id];
+    const kf=LS[id].kfs.find(k=>Math.abs(k.t-t)<0.3&&k.t!==0);
+    if(kf)kf.on=on;else{LS[id].kfs.push({t,on});LS[id].kfs.sort((a,b)=>a.t-b.t);}
+  });
+  _lightSnap.sus.forEach(s=>{
+    const l=ST.susLights.find(x=>x.id===s.id);if(!l)return;
+    const kf=l.kfs.find(k=>Math.abs(k.t-t)<0.3&&k.t!==0);
+    if(kf)kf.on=s.on;else{l.kfs.push({t,on:s.on});l.kfs.sort((a,b)=>a.t-b.t);}
+  });
+  syncAllLights();updSusUI();renderTL();
+  showMode(`💡 照明KF貼付 @ ${fmt(t)}`);
+}
+
+function copyKFSnapshot(){
+  _kfSnapshot = {};
+  ST.dancers.forEach(d=>{
+    const pos = interpPos(d, ST.t);
+    _kfSnapshot[d.id] = {x: pos.x, z: pos.z};
+  });
+  // 貼付ボタンを有効化
+  const pb = document.getElementById('kfpastebtn');
+  if(pb){ pb.style.opacity='1'; pb.style.pointerEvents='auto'; }
+  // フィードバック
+  showMode(`✓ ${ST.dancers.length}人の位置をコピーしました (${fmt(ST.t)})`);
+}
+
+function pasteKFSnapshot(){
+  if(!_kfSnapshot){ showMode('先にコピーしてください'); return; }
+  let count = 0;
+  ST.dancers.forEach(d=>{
+    const snap = _kfSnapshot[d.id];
+    if(!snap) return; // スナップ時にいなかったダンサーはスキップ
+    let kf = d.kfs.find(k => Math.abs(k.t - ST.t) < 0.12);
+    if(kf){ kf.x = snap.x; kf.z = snap.z; }
+    else{ d.kfs.push({t: ST.t, x: snap.x, z: snap.z}); d.kfs.sort((a,b)=>a.t-b.t); }
+    count++;
+  });
+  renderTL(); syncAll(); renderProps();
+  showMode(`✓ ${count}人の位置を ${fmt(ST.t)} に貼り付けました`);
+}
+
+function showMode(msg, ms=2500){
+  document.getElementById('modebar').textContent = msg;
+  clearTimeout(showMode._t);
+  showMode._t = setTimeout(()=>document.getElementById('modebar').textContent='ドラッグ: 回転　ピンチ/ホイール: ズーム　タップ: 選択', ms);
+}
+
+// Scrubber
+const scrubEl=document.getElementById('scrub-pos');
+function doScrub(cx){
+  const r=scrubEl.getBoundingClientRect();
+  const pct=clamp((cx-r.left)/r.width,0,1);
+  const viewLen=ST.dur/tlZoom;
+  seekTo(tlOffset+pct*viewLen);
+}
+scrubEl.addEventListener('mousedown',e=>{scrubNow=true;doScrub(e.clientX);e.stopPropagation();});
+window.addEventListener('mousemove',e=>{if(scrubNow)doScrub(e.clientX);});
+window.addEventListener('mouseup',()=>scrubNow=false);
+scrubEl.addEventListener('touchstart',e=>{e.preventDefault();e.stopPropagation();scrubNow=true;doScrub(e.touches[0].clientX);},{passive:false});
+window.addEventListener('touchmove',e=>{if(scrubNow&&e.touches[0]){e.preventDefault();doScrub(e.touches[0].clientX);}},{passive:false});
+window.addEventListener('touchend',()=>scrubNow=false);
+
+// ═══════════════════════════════════════════════════
+// PLAYBACK
+// ═══════════════════════════════════════════════════
+function togglePlay(){
+  const aud=document.getElementById('aud');
+  ST.playing=!ST.playing;
+  if(ST.playing){
+    if(ST.t>=ST.dur)seekTo(0);
+    if(aud.src&&aud.readyState>=2){aud.currentTime=ST.t;aud.play().catch(()=>{});}
+  }else aud.pause();
+  document.getElementById('plybtn').textContent=ST.playing?'⏸ 停止':'▶ 再生';
+}
+
+// ═══════════════════════════════════════════════════
+// AUDIO
+// ═══════════════════════════════════════════════════
+async function loadAudio(inp){
+  const file=inp.files[0];if(!file)return;
+  const aud=document.getElementById('aud');
+  if(aud.src)URL.revokeObjectURL(aud.src);
+  aud.src=URL.createObjectURL(file);aud.load();
+  document.getElementById('audioname').textContent=file.name;
+  aud.onloadedmetadata=()=>{if(isFinite(aud.duration)&&aud.duration>0){ST.dur=Math.ceil(aud.duration);document.getElementById('dur').value=ST.dur;renderTL();}};
+  aud.onended=()=>{ST.playing=false;document.getElementById('plybtn').textContent='▶ 再生';};
+  try{const buf=await file.arrayBuffer();const ac=new(window.AudioContext||window.webkitAudioContext)();const dec=await ac.decodeAudioData(buf);drawWave(dec);ac.close();}catch(e){}
+}
+function drawWave(buf){
+  const cv=document.getElementById('wc'),wf=document.getElementById('waveform');
+  const w=wf.clientWidth||300,h=26;cv.width=w;cv.height=h;
+  const ctx=cv.getContext('2d'),data=buf.getChannelData(0),step=Math.ceil(data.length/w);
+  ctx.fillStyle='#03030a';ctx.fillRect(0,0,w,h);ctx.strokeStyle='#2233aa';ctx.lineWidth=1;ctx.beginPath();
+  for(let x=0;x<w;x++){let mn=1,mx=-1;for(let i=0;i<step;i++){const d=data[x*step+i]||0;if(d<mn)mn=d;if(d>mx)mx=d;}ctx.moveTo(x,((1+mn)/2)*h);ctx.lineTo(x,((1+mx)/2)*h);}
+  ctx.stroke();
+}
+function waveSeek(e){
+  const wf=document.getElementById('waveform');
+  seekTo(clamp((e.clientX-wf.getBoundingClientRect().left)/wf.clientWidth,0,1)*ST.dur);
+}
+
+// ═══════════════════════════════════════════════════
+// PROJECT SAVE
+// ═══════════════════════════════════════════════════
+const LS_KEY='stage3d_v4';
+const getPS=()=>{try{return JSON.parse(localStorage.getItem(LS_KEY)||'{}');}catch{return {};}};
+const setPS=p=>localStorage.setItem(LS_KEY,JSON.stringify(p));
+function askSave(){
+  const proj=document.getElementById('projname').value.trim(),work=document.getElementById('workname').value.trim();
+  if(!proj||!work){alert('プロジェクト名と作品名を入力してください');return;}
+  document.getElementById('sm-p').textContent=proj;document.getElementById('sm-w').textContent=work;
+  document.getElementById('smodal').classList.add('show');
+}
+function closeSaveModal(){document.getElementById('smodal').classList.remove('show');}
+function doSave(type){
+  const proj=document.getElementById('projname').value.trim(),work=document.getElementById('workname').value.trim();
+  const data=getWD();
+  if(type==='local'){const ps=getPS();if(!ps[proj])ps[proj]={};ps[proj][work]=data;setPS(ps);ST.selWork={proj,work};renderWorkList();closeSaveModal();alert(`「${proj}/${work}」を保存しました`);}
+  else{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(data,null,2)],{type:'application/json'}));a.download=`${proj}_${work}.json`;a.click();closeSaveModal();}
+}
+function loadWork(){
+  // 選択中のものを読む。なければプロジェクト名・作品名入力欄から探す
+  let proj=ST.selWork?.proj||document.getElementById('projname').value.trim();
+  let work=ST.selWork?.work||document.getElementById('workname').value.trim();
+  if(!proj||!work){alert('左の一覧から作品をクリックしてください');return;}
+  const data=getPS()[proj]?.[work];
+  if(!data){alert(`「${proj}/${work}」が見つかりません`);return;}
+  try{
+    applyWD(data);
+    ST.selWork={proj,work};
+    document.getElementById('projname').value=proj;
+    document.getElementById('workname').value=work;
+    renderWorkList();
+    showMode(`✓ 「${proj}/${work}」を読み込みました`);
+  }catch(err){
+    alert('読込エラー:\n'+err.message);
+    console.error(err);
+  }
+}
+function delWork(){
+  if(!ST.selWork||!confirm(`削除: ${ST.selWork.proj}/${ST.selWork.work}`))return;
+  const ps=getPS();if(ps[ST.selWork.proj])delete ps[ST.selWork.proj][ST.selWork.work];
+  setPS(ps);ST.selWork=null;renderWorkList();
+}
+function selectWork(proj,work){ST.selWork={proj,work};document.getElementById('projname').value=proj;document.getElementById('workname').value=work;renderWorkList();}
+function renderWorkList(){
+  const el=document.getElementById('work-list');el.innerHTML='';
+  const ps=getPS();
+  const entries=[];
+  for(const[proj,works] of Object.entries(ps))for(const work of Object.keys(works)){
+    entries.push({proj,work});
+  }
+  if(entries.length===0){
+    el.innerHTML='<div style="font-size:10px;color:#33335a;padding:4px 6px">保存データなし</div>';
+    return;
+  }
+  entries.forEach(({proj,work})=>{
+    const isSel=ST.selWork?.proj===proj&&ST.selWork?.work===work;
+    const row=document.createElement('div');
+    row.className='pw'+(isSel?' sel':'');
+    row.title=`クリックで「${proj}/${work}」を読み込む`;
+    row.innerHTML=`
+      <span class="pw-name" style="font-weight:${isSel?'700':'400'}">${proj}/${work}</span>
+      <span style="font-size:9px;color:${isSel?'#88aaff':'#33335a'};flex-shrink:0">${isSel?'✓ 選択中':'読込'}</span>
+      <span class="pw-del" onclick="event.stopPropagation();delWD('${proj}','${work}')" title="削除">✕</span>
+    `;
+    // クリックで即読込
+    row.onclick=()=>{
+      selectWork(proj,work);
+      const data=getPS()[proj]?.[work];
+      if(!data){alert('データが見つかりません');return;}
+      try{
+        applyWD(data);
+        // プロジェクト名・作品名を反映（applyWD内でrenderWorkListが呼ばれるがselWorkを先にセット）
+        ST.selWork={proj,work};
+        document.getElementById('projname').value=proj;
+        document.getElementById('workname').value=work;
+        renderWorkList();
+        showMode(`✓ 「${proj}/${work}」を読み込みました`);
+      }catch(err){
+        alert('読込エラー:\n'+err.message);
+      }
+    };
+    el.appendChild(row);
+  });
+}
+function delWD(proj,work){const ps=getPS();if(ps[proj])delete ps[proj][work];setPS(ps);if(ST.selWork?.proj===proj&&ST.selWork?.work===work)ST.selWork=null;renderWorkList();}
+function getWD(){return{dancers:JSON.parse(JSON.stringify(ST.dancers)),susLights:JSON.parse(JSON.stringify(ST.susLights)),lightState:JSON.parse(JSON.stringify(LS)),dur:ST.dur,stW:ST.stW,stD:ST.stD,stH:ST.stH,stMat:ST.stMat,susR:ST.susR,susC:ST.susC};}
+function applyWD(data){
+  // 1. ダンサー完全クリア
+  ST.dancers.forEach(d=>rmDancerMesh(d.id)); ST.dancers=[];
+
+  // 2. ステージ寸法
+  ST.dur=data.dur||180; document.getElementById('dur').value=ST.dur;
+  ST.stW=data.stW||12; ST.stD=data.stD||8; ST.stH=data.stH||0.4;
+  ST.stMat=data.stMat||'concrete';
+  document.getElementById('sw').value=ST.stW;
+  document.getElementById('sd').value=ST.stD;
+  document.getElementById('sh').value=ST.stH;
+
+  // 3. サスグリッドサイズ
+  ST.susR=data.susR||5; ST.susC=data.susC||7;
+  document.getElementById('sr').value=ST.susR;
+  document.getElementById('sc').value=ST.susC;
+
+  // 4. 照明KFを完全リセット（前ファイルのKFが残らないように）
+  LIGHT_IDS.forEach(k=>{
+    LS[k]={kfs:[{t:0,on:false}],color:'#ffffff',intensity:60,fade:0};
+  });
+  // ファイルのデータで完全上書き
+  if(data.lightState){
+    Object.keys(LS).forEach(k=>{
+      if(data.lightState[k])
+        LS[k]=JSON.parse(JSON.stringify(data.lightState[k]));
+    });
+  }
+
+  // 5. 3Dシーン再構築
+  buildStage();
+  buildAllLights();
+
+  // 6. サスを完全リセットしてから復元（_lidも含めてリセット）
+  ST.susLights.forEach(l=>rmSusMesh(l.id)); ST.susLights=[]; _lid=0;
+  if(data.susLights&&data.susLights.length>0){
+    data.susLights.forEach(l=>{
+      _lid=Math.max(_lid,l.id);
+      ST.susLights.push(JSON.parse(JSON.stringify(l)));
+      mkSusMesh(ST.susLights[ST.susLights.length-1]);
+    });
+    buildSusUI();
+  } else {
+    rebuildSus();
+  }
+
+  // 7. ダンサー復元（_didもリセット）
+  _did=0;
+  (data.dancers||[]).forEach(d=>{
+    _did=Math.max(_did,d.id);
+    ST.dancers.push(JSON.parse(JSON.stringify(d)));
+    mkDancerMesh(ST.dancers[ST.dancers.length-1]);
+  });
+
+  // 8. 床材ボタンUI
+  document.querySelectorAll('[id^="mat-"]').forEach(el=>el.classList.remove('on'));
+  document.getElementById('mat-'+ST.stMat)?.classList.add('on');
+
+  // 9. t=0で同期
+  ST.selId=null; ST.t=0;
+  syncAllLights();
+  ST.dancers.forEach(syncDancer);
+  ST.susLights.forEach(syncSusMesh); updSusUI();
+
+  // 10. UI更新
+  renderLeft(); renderProps(); renderWorkList(); renderTL(); updDash();
+}
+function exportJ(){const a=document.createElement('a');const p=document.getElementById('projname').value||'project',w=document.getElementById('workname').value||'work';a.href=URL.createObjectURL(new Blob([JSON.stringify(getWD(),null,2)],{type:'application/json'}));a.download=`${p}_${w}.json`;a.click();}
+function importJ(){
+  // 値をリセットしてから開く（同じファイルを再選択できるように）
+  const jf=document.getElementById('jf');
+  jf.value='';
+  jf.click();
+}
+
+function onJsonFile(input){
+  const file=input.files[0]; if(!file)return;
+  const fr=new FileReader();
+  fr.onload=function(ev){
+    let data;
+    try{ data=JSON.parse(ev.target.result); }
+    catch(err){ alert('JSONの解析エラー:\n'+err.message); return; }
+
+    if(!data.dancers&&!data.susLights){
+      alert('このファイルはSTAGE 3Dのデータではありません');return;
+    }
+
+    // ファイル名からプロジェクト名・作品名を取得
+    const base=file.name.replace(/\.json$/i,'');
+    const us=base.indexOf('_');
+    const proj=us>0?base.slice(0,us):'読込データ';
+    const work=us>0?base.slice(us+1):base;
+
+    // localStorageに保存
+    const ps=getPS();
+    if(!ps[proj])ps[proj]={};
+    ps[proj][work]=JSON.parse(JSON.stringify(data));
+    setPS(ps);
+
+    // UIを先に更新
+    ST.selWork={proj,work};
+    document.getElementById('projname').value=proj;
+    document.getElementById('workname').value=work;
+
+    // シーンに反映
+    try{
+      applyWD(data);
+    }catch(err){
+      alert('読込エラー:\n'+err.message);
+      console.error(err);
+      return;
+    }
+
+    // applyWD後に再度セット（applyWD内で上書きされる可能性対策）
+    ST.selWork={proj,work};
+    document.getElementById('projname').value=proj;
+    document.getElementById('workname').value=work;
+    renderWorkList();
+    showMode('✓ 「'+proj+'/'+work+'」読込完了 — ダンサー'+(data.dancers||[]).length+'人');
+  };
+  fr.onerror=function(){ alert('ファイル読込失敗'); };
+  fr.readAsText(file);
+}
+
+// ═══════════════════════════════════════════════════
+// STAGE CONTROLS
+// ═══════════════════════════════════════════════════
+function rebuildStage(){
+  ST.stW=parseFloat(document.getElementById('sw').value)||12;
+  ST.stD=parseFloat(document.getElementById('sd').value)||8;
+  ST.stH=parseFloat(document.getElementById('sh').value)||0.4;
+  buildStage();buildAllLights();
+}
+function setMat(m){
+  ST.stMat=m;
+  document.querySelectorAll('[id^="mat-"]').forEach(el=>el.classList.remove('on'));
+  document.getElementById('mat-'+m)?.classList.add('on');
+  buildStage();
+}
+function toggleKen(){
+  ST.showKen=!ST.showKen;
+  const el=document.getElementById('kentog');
+  el.className='ltb'+(ST.showKen?' on':'');
+  el.textContent='間マーク '+(ST.showKen?'表示':'非表示');
+  buildStage();
+}
+function toggleWing(){
+  ST.showWing=!ST.showWing;
+  document.getElementById('wingtog').textContent=ST.showWing?'非表示':'表示';
+  document.getElementById('wingVis')?.classList.toggle('on',ST.showWing);
+  buildStage();renderLeft();// re-render to show wing badges
+}
+function toggleWingVis(){
+  const el=document.getElementById('winghide');
+  ST.showWing=!ST.showWing;
+  el.className='ltb'+(ST.showWing?' on':'');
+  el.textContent='袖エリア '+(ST.showWing?'表示':'非表示');
+  buildStage();
+}
+// ── ステージ作業灯（ステージ全体を明るく見せる）──
+let _stageBright=false;
+let _workLight=null;
+function toggleStageBright(){
+  _stageBright=!_stageBright;
+  const btn=document.getElementById('brightbtn');
+  if(_stageBright){
+    // 白い全方位ライトを追加
+    if(!_workLight){
+      _workLight=new THREE.HemisphereLight(0xffffff,0x444466,0);
+      sce.add(_workLight);
+    }
+    _workLight.intensity=2.0;
+    btn.style.color='#ffdd44';
+    btn.style.background='#1a1500';
+    btn.textContent='💡 作業灯ON';
+    showMode('💡 作業灯ON — ステージを明るく表示中');
+  } else {
+    if(_workLight) _workLight.intensity=0;
+    btn.style.color='';
+    btn.style.background='';
+    btn.textContent='💡 作業灯';
+    showMode('💡 作業灯OFF');
+  }
+}
+
+// ── 新規ステージ（全データ初期化）──
+function newStage(){
+  if(!confirm('新規ステージを作成します。\n現在の立ち位置・照明・KFが全て削除されます。\n保存していない場合は先にJSON書き出しを！\n\nよろしいですか？')) return;
+
+  // ダンサー全削除
+  ST.dancers.forEach(d=>rmDancerMesh(d.id));
+  ST.dancers=[];_did=0;
+
+  // 照明KF完全リセット
+  LIGHT_IDS.forEach(id=>{LS[id].kfs=[{t:0,on:false}];_ltPreview[id]=false;});
+
+  // サスリセット
+  ST.susLights.forEach(l=>rmSusMesh(l.id));ST.susLights=[];_lid=0;
+
+  // プロジェクト名をクリア
+  document.getElementById('projname').value='';
+  document.getElementById('workname').value='';
+  ST.selWork=null;
+
+  // タイムライン
+  ST.t=0;ST.dur=180;
+  document.getElementById('dur').value=180;
+
+  // 記録モードをOFF
+  if(_lightRecording){_lightRecording=false;
+    const rb=document.getElementById('lrec-btn');
+    if(rb){rb.textContent='⚫ 記録OFF';rb.style.color='#ff4444';rb.style.borderColor='#661111';rb.style.background='';rb.style.animation='';}
+  }
+
+  // Three.js全消灯
+  LIGHT_IDS.forEach(id=>{const e=LG[id];if(!e)return;e.spots.forEach(s=>{if(s.spot)s.spot.intensity=0;if(s.cone)s.cone.material.opacity=0;});});
+
+  // ステージ再構築
+  rebuildSus();
+  renderLeft();renderProps();renderWorkList();renderTL();updDash();
+  showMode('🆕 新規ステージ作成 — 全データをクリアしました');
+}
+
+function toggleLightMode(){
+  document.body.classList.toggle('light-panel');
+  const tog=document.getElementById('modetog');
+  tog.textContent=document.body.classList.contains('light-panel')?'🌙 暗':'☀ 明';
+}
+function togglePanel(side){document.getElementById(side).classList.toggle('open');}
+
+function syncAll(){ST.dancers.forEach(syncDancer);syncAllLights();syncSusMeshes();}
+
+// ═══════════════════════════════════════════════════
+// INT SLIDER helpers for % display
+// ═══════════════════════════════════════════════════
+function bindSlider(sliderId,labelId,lightIds){
+  const s=document.getElementById(sliderId);
+  if(!s)return;
+  s.addEventListener('input',()=>{
+    const v=+s.value;
+    document.getElementById(labelId).textContent=v+'%';
+    lightIds.forEach(id=>{LS[id].intensity=v;syncLight(id);});
+  });
+}
+
+// ═══════════════════════════════════════════════════
+// ANIMATION LOOP
+// ═══════════════════════════════════════════════════
+let _lts=0;
+function loop(ts){
+  requestAnimationFrame(loop);
+  // バックグラウンド時はスキップ（バッテリー節約、コンテキスト保護）
+  if(document.hidden){ _lts=ts; return; }
+  const aud=document.getElementById('aud');
+  if(ST.playing){
+    if(aud.src&&aud.readyState>=2&&!aud.paused){
+      ST.t=aud.currentTime;
+      if(aud.ended){ST.playing=false;document.getElementById('plybtn').textContent='▶ 再生';}
+    }else if(!aud.src){
+      ST.t+=Math.min((ts-_lts)/1000,0.1);
+      if(ST.t>=ST.dur){ST.t=ST.dur;ST.playing=false;document.getElementById('plybtn').textContent='▶ 再生';}
+    }
+    renderTL();
+    // 再生中はKF+フェードでプレビューを更新してからsyncAll
+    LIGHT_IDS.forEach(id=>{
+      _ltPreview[id] = getFadeLevel(LS[id].kfs,ST.t,
+        LS[id].fadeIn||LS[id].fade||0, LS[id].fadeOut||LS[id].fade||0) > 0.01;
+    });
+    syncAll();
+    if(ts-_lts>120){ renderProps(); updDash(); }
+  }
+  _lts=ts;
+  updLabels();
+  try{ ren.render(sce,cam); }catch(e){}
+}
+
+// ═══════════════════════════════════════════════════
+// PROPAREA injection into right panel
+// ═══════════════════════════════════════════════════
+function injectPropArea(){
+  const right=document.getElementById('right');
+  const ph=document.createElement('div');ph.className='ph';ph.innerHTML='<span class="ph-l">📐 選択ダンサー</span>';
+  const pa=document.createElement('div');pa.id='proparea';
+  pa.innerHTML='<div style="font-size:10px;color:#7777aa;padding:5px 8px">ダンサーを選択してください</div>';
+  // Insert before stage settings ph
+  const stph=right.querySelector('.ph');
+  right.insertBefore(ph,stph);right.insertBefore(pa,stph);
+}
+
+// ════════════════════════════════
+// KF立ち位置図面PDF
+// ════════════════════════════════
+function exportStagePDF(){
+  const proj=document.getElementById('projname').value||'プロジェクト';
+  const work=document.getElementById('workname').value||'作品';
+
+  // ダンサーKFの時刻を収集
+  const allT=new Set([0]);
+  ST.dancers.forEach(d=>d.kfs.forEach(k=>allT.add(k.t)));
+  LIGHT_IDS.forEach(id=>LS[id].kfs.forEach(k=>{if(k.t>0||k.on)allT.add(k.t);}));
+  ST.susLights.forEach(l=>l.kfs.forEach(k=>{if(k.t>0||k.on)allT.add(k.t);}));
+  const times=[...allT].sort((a,b)=>a-b);
+
+  // 各KFの俯瞰図をcanvasで描画してdata URLに変換
+  const KEN=1.818;
+  const CW=320, CH=220; // canvas size per diagram
+  const diagrams=[];
+
+  times.forEach(t=>{
+    const offscreenCanvas=document.createElement('canvas');
+    offscreenCanvas.width=CW; offscreenCanvas.height=CH;
+    const c=offscreenCanvas.getContext('2d');
+
+    const PAD=30;
+    const scX=(CW-PAD*2)/ST.stW;
+    const scY=(CH-PAD*2)/ST.stD;
+    const pxM=Math.min(scX,scY,36);
+    const ox=(CW-ST.stW*pxM)/2;
+    const oy=(CH-ST.stD*pxM)/2;
+    const s2cx=(x)=>ox+(x+ST.stW/2)*pxM;
+    const s2cy=(z)=>oy+(z+ST.stD/2)*pxM;
+    const W=ST.stW*pxM, H=ST.stD*pxM;
+
+    // 背景
+    c.fillStyle='#0a0a1a'; c.fillRect(0,0,CW,CH);
+
+    // 照明オーバーレイ（薄く）
+    const rgba=(hex,a)=>{const r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);return`rgba(${r},${g},${b},${a})`;};
+
+    if(getOnAt(LS.backSus.kfs,t)){
+      c.fillStyle=rgba(LS.backSus.color,0.12); c.fillRect(ox,oy,W,H*0.6);
+    }
+    if(getOnAt(LS.backFoot.kfs,t)){
+      const g2=c.createLinearGradient(ox,oy,ox,oy+H*0.7);
+      g2.addColorStop(0,rgba(LS.backFoot.color,0.4));g2.addColorStop(1,'rgba(0,0,0,0)');
+      c.fillStyle=g2; c.fillRect(ox,oy,W,H*0.7);
+    }
+    if(getOnAt(LS.fohUp.kfs,t)||getOnAt(LS.fohLo.kfs,t)){
+      const col=getOnAt(LS.fohUp.kfs,t)?LS.fohUp.color:LS.fohLo.color;
+      const g3=c.createLinearGradient(ox,oy+H,ox,oy);
+      g3.addColorStop(0,rgba(col,0.2));g3.addColorStop(1,'rgba(0,0,0,0)');
+      c.fillStyle=g3; c.fillRect(ox,oy,W,H);
+    }
+    // サス
+    const susCol=document.getElementById('susCol')?.value||'#ffbb44';
+    ST.susLights.filter(l=>getOnAt(l.kfs,t)).forEach(l=>{
+      const cx=s2cx(l.x), cy=s2cy(l.z), r=pxM*0.38;
+      const g4=c.createRadialGradient(cx,cy,0,cx,cy,r);
+      g4.addColorStop(0,rgba(susCol,0.5));g4.addColorStop(1,'rgba(0,0,0,0)');
+      c.fillStyle=g4; c.beginPath(); c.arc(cx,cy,r,0,Math.PI*2); c.fill();
+    });
+
+    // ステージ枠
+    c.strokeStyle='#334466'; c.lineWidth=1.5; c.strokeRect(ox,oy,W,H);
+    // 客席ライン
+    c.strokeStyle='#5577aa'; c.lineWidth=2;
+    c.beginPath();c.moveTo(ox,oy+H);c.lineTo(ox+W,oy+H);c.stroke();
+    // センター十字
+    c.strokeStyle='#1e1e38'; c.lineWidth=0.5;
+    c.beginPath();c.moveTo(ox+W/2,oy);c.lineTo(ox+W/2,oy+H);c.stroke();
+    c.beginPath();c.moveTo(ox,oy+H/2);c.lineTo(ox+W,oy+H/2);c.stroke();
+    // Kenライン
+    const maxK=Math.ceil(ST.stW/2/KEN)+1;
+    for(let k=-maxK;k<=maxK;k++){
+      const x=k*KEN; if(Math.abs(x)>ST.stW/2+0.01)continue;
+      c.strokeStyle=k===0?'#2233aa':'#111128'; c.lineWidth=k===0?1:0.4;
+      c.beginPath();c.moveTo(s2cx(x),oy);c.lineTo(s2cx(x),oy+H);c.stroke();
+    }
+    // Ken番号（フロント）
+    c.fillStyle='#4466cc'; c.font=`bold ${Math.max(7,pxM*0.26)}px system-ui`;
+    c.textAlign='center'; c.textBaseline='top';
+    for(let k=-maxK;k<=maxK;k++){
+      const x=k*KEN; if(Math.abs(x)>ST.stW/2+0.01)continue;
+      c.fillText(k<0?`上${Math.abs(k)}`:k>0?`下${k}`:'0', s2cx(x), oy+H+2);
+    }
+    // 奥手前ラベル
+    c.fillStyle='#445'; c.font=`${Math.max(7,pxM*0.22)}px system-ui`;
+    c.textAlign='center'; c.textBaseline='bottom';
+    c.fillText('奥',ox+W/2,oy-1);
+    c.textBaseline='top';
+    c.fillText('客席',ox+W/2,oy+H+12);
+
+    // ダンサー
+    ST.dancers.forEach(d=>{
+      if(!d.visible)return;
+      const p=interpPos(d,t);
+      const cx=s2cx(p.x), cy=s2cy(p.z);
+      const r=Math.max(9,pxM*0.2);
+      c.fillStyle=d.color;
+      c.beginPath();c.arc(cx,cy,r,0,Math.PI*2);c.fill();
+      c.fillStyle='rgba(0,0,0,0.2)';
+      c.beginPath();c.arc(cx+r*0.1,cy+r*0.1,r*0.65,0,Math.PI*2);c.fill();
+      c.fillStyle='#fff';
+      c.font=`bold ${Math.max(7,r*0.75)}px system-ui`;
+      c.textAlign='center'; c.textBaseline='middle';
+      c.fillText(d.name.slice(0,2),cx,cy);
+    });
+
+    diagrams.push({t, dataUrl:offscreenCanvas.toDataURL('image/png')});
+  });
+
+  // 照明状態テキスト
+  const lNames={backSus:'バックサスA',backSusB:'バックサスB',backFoot:'バックフット',
+    fohUp:'FOH上',fohLo:'FOH下',
+    ss1LU:'SS1下手上',ss1LL:'SS1下手下',ss1RU:'SS1上手上',ss1RL:'SS1上手下',
+    ss2LU:'SS2下手上',ss2LL:'SS2下手下',ss2RU:'SS2上手上',ss2RL:'SS2上手下'};
+  const susTotal=ST.susLights.length;
+  const getLightInfo=t=>{
+    const on=LIGHT_IDS.filter(id=>getOnAt(LS[id].kfs,t)).map(id=>lNames[id]||id);
+    const susOn=ST.susLights.filter(l=>getOnAt(l.kfs,t)).length;
+    if(susOn>0)on.push(`サス${susOn}/${susTotal}灯`);
+    return on.length?on.join('・'):'すべてOFF';
+  };
+
+  // HTML生成
+  const cards=diagrams.map(({t,dataUrl},i)=>`
+    <div class="card">
+      <div class="card-header">
+        <span class="kf-num">KF ${i+1}</span>
+        <span class="kf-time">${fmt(t)}</span>
+      </div>
+      <img src="${dataUrl}" class="stage-img">
+      <div class="card-body">
+        <div class="dancers-row">${ST.dancers.map(d=>{
+          const p=interpPos(d,t);
+          return`<span class="dancer-tag" style="border-left:3px solid ${d.color}">${d.name}<br><small>${Math.abs(p.x)>ST.stW/2?'袖':'X:'+p.x.toFixed(1)+' Z:'+p.z.toFixed(1)}</small></span>`;
+        }).join('')}</div>
+        <div class="lights-row">💡 ${getLightInfo(t)}</div>
+      </div>
+    </div>`).join('');
+
+  const html=`<!DOCTYPE html><html lang="ja"><head><meta charset="UTF-8">
+<title>${proj}／${work} 立ち位置図面</title>
+<style>
+body{font-family:'Hiragino Kaku Gothic ProN',system-ui,sans-serif;font-size:11px;color:#111;background:#fff;padding:10mm 8mm;margin:0}
+h1{font-size:16px;font-weight:800;color:#1133aa;margin-bottom:3px}
+.meta{font-size:10px;color:#555;padding-bottom:6px;border-bottom:2px solid #1133aa;margin-bottom:10px}
+.hint{padding:6px 10px;background:#fff8e0;border:1px solid #ddbb00;border-radius:4px;font-size:10px;margin-bottom:10px}
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.card{border:1px solid #ccd;border-radius:6px;overflow:hidden;break-inside:avoid}
+.card-header{display:flex;align-items:center;gap:8px;padding:5px 8px;background:#1133aa;color:#fff}
+.kf-num{font-size:11px;font-weight:800}
+.kf-time{font-family:monospace;font-size:13px;font-weight:800;margin-left:auto}
+.stage-img{width:100%;display:block;background:#0a0a1a}
+.card-body{padding:5px 8px;background:#f8f8ff}
+.dancers-row{display:flex;flex-wrap:wrap;gap:2px;margin-bottom:4px}
+.dancer-tag{display:inline-block;padding:1px 5px;background:#eef;border-radius:3px;font-size:9px;line-height:1.4}
+.dancer-tag small{color:#666;font-size:8px;display:block}
+.lights-row{font-size:9px;color:#334;background:#fffff0;padding:2px 5px;border-radius:3px;border:1px solid #ddc}
+@media print{.hint{display:none}body{padding:6mm}h1{font-size:13px}.grid{gap:5px}}
+</style></head><body>
+<h1>📐 KF立ち位置図面</h1>
+<div class="meta">プロジェクト: <b>${proj}</b> ／ 作品: <b>${work}</b> ／ ダンサー: ${ST.dancers.length}人 ／ 全${diagrams.length}KF ／ ${new Date().toLocaleString('ja-JP')}</div>
+<div class="hint">💡 ブラウザの 印刷 (⌘P / Ctrl+P) → 「PDFに保存」でPDFになります。A4横向きを推奨。</div>
+<div class="grid">${cards}</div>
+</body></html>`;
+
+  const w=window.open('','_blank');
+  if(!w){alert('ポップアップがブロックされました。ブラウザの設定で許可してください');return;}
+  w.document.write(html);
+  w.document.close();
+  setTimeout(()=>w.print(),800);
+}
+function exportKFReport(){
+  const proj=document.getElementById('projname').value||'プロジェクト';
+  const work=document.getElementById('workname').value||'作品';
+
+  // 全KF時刻を収集
+  const allT=new Set([0]);
+  ST.dancers.forEach(d=>d.kfs.forEach(k=>allT.add(k.t)));
+  LIGHT_IDS.forEach(id=>LS[id].kfs.forEach(k=>{if(k.t>0||k.on)allT.add(k.t);}));
+  ST.susLights.forEach(l=>l.kfs.forEach(k=>{if(k.t>0||k.on)allT.add(k.t);}));
+  const times=[...allT].sort((a,b)=>a-b);
+
+  const lNames={backSus:'バックサスA',backSusB:'バックサスB',backFoot:'バックフット',
+    fohUp:'FOH上',fohLo:'FOH下',
+    ss1LU:'SS1下手上',ss1LL:'SS1下手下',ss1RU:'SS1上手上',ss1RL:'SS1上手下',
+    ss2LU:'SS2下手上',ss2LL:'SS2下手下',ss2RU:'SS2上手上',ss2RL:'SS2上手下'};
+
+  const susTotal=ST.susLights.length;
+  const susOnCount=t=>ST.susLights.filter(l=>getOnAt(l.kfs,t)).length;
+
+  let rows='';
+  times.forEach((t,i)=>{
+    const lightsOn=LIGHT_IDS.filter(id=>getOnAt(LS[id].kfs,t));
+    const susOn=susOnCount(t);
+    rows+=`<tr class="${i%2===0?'even':'odd'}">
+      <td class="time">${fmt(t)}</td>
+      <td class="dancers">${ST.dancers.map(d=>{
+        const p=interpPos(d,t);
+        const inW=Math.abs(p.x)>ST.stW/2;
+        return `<span class="dancer" style="border-left:3px solid ${d.color}">${d.name}<br><small>${inW?'袖':'X:'+p.x.toFixed(1)+' Z:'+p.z.toFixed(1)}</small></span>`;
+      }).join('')}</td>
+      <td class="sus">${susOn>0?`<b>${susOn}/${susTotal}</b>`:`<span style="color:#ccc">0/${susTotal}</span>`}</td>
+      <td class="lights">${lightsOn.map(id=>`<span class="lon">${lNames[id]||id}</span>`).join('')||'<span class="loff">すべてOFF</span>'}</td>
+    </tr>`;
+  });
+
+  const html=`<!DOCTYPE html><html lang="ja"><head><meta charset="UTF-8">
+<title>${proj}／${work} KF一覧</title>
+<style>
+body{font-family:'Hiragino Kaku Gothic ProN',system-ui,sans-serif;font-size:11px;color:#111;padding:12mm 10mm;background:#fff}
+h1{font-size:15px;font-weight:800;color:#1133aa;margin-bottom:3px}
+.meta{font-size:10px;color:#555;margin-bottom:8px;padding-bottom:6px;border-bottom:2px solid #1133aa}
+.hint{padding:6px 10px;background:#fff8e0;border:1px solid #ddbb00;border-radius:4px;font-size:10px;margin-bottom:8px}
+table{width:100%;border-collapse:collapse}
+th{background:#1133aa;color:#fff;padding:5px 8px;text-align:left;font-size:10px}
+td{padding:4px 8px;vertical-align:top;border-bottom:1px solid #e0e0e0}
+.even{background:#f8f8ff}.odd{background:#fff}
+.time{font-family:monospace;font-size:12px;font-weight:800;color:#1133aa;width:58px;white-space:nowrap}
+.dancer{display:inline-block;padding:1px 5px;margin:1px;background:#f0f0f8;border-radius:3px;font-size:10px;line-height:1.5}
+.dancer small{color:#666;font-size:8px;display:block}
+.sus{width:64px;text-align:center;font-size:11px;color:#886600}
+.lon{display:inline-block;padding:1px 5px;margin:1px;background:#ddeeff;color:#1133aa;border-radius:3px;font-size:9px;font-weight:700}
+.loff{color:#bbb;font-size:9px}
+@media print{.hint{display:none}tr{page-break-inside:avoid}}
+</style></head><body>
+<h1>📋 KF一覧レポート</h1>
+<div class="meta">プロジェクト: <b>${proj}</b> ／ 作品: <b>${work}</b> ／ ダンサー: ${ST.dancers.length}人 ／ 全長: ${fmt(ST.dur)} ／ KFポイント: ${times.length} ／ 出力: ${new Date().toLocaleString('ja-JP')}</div>
+<div class="hint">💡 ブラウザの 印刷 (⌘P / Ctrl+P) → 「PDFに保存」でPDFになります</div>
+<table><thead><tr><th>時刻</th><th>ダンサー立ち位置</th><th>サス</th><th>照明ON</th></tr></thead>
+<tbody>${rows}</tbody></table>
+<div style="margin-top:10px;text-align:center;color:#bbb;font-size:9px">STAGE 3D v4</div>
+</body></html>`;
+
+  const w=window.open('','_blank');
+  if(!w){alert('ポップアップがブロックされました。ブラウザの設定でポップアップを許可してください');return;}
+  w.document.write(html);
+  w.document.close();
+  setTimeout(()=>w.print(),600);
+}
+
+// ═══════════════════════════════════════════════════
+// BOOT
+// ═══════════════════════════════════════════════════
+// ★ iOS完全対応: touchend→clickの即時変換（FastClick方式）
+// これでdivボタンが全部タップ一発で反応する
+(function(){
+  var _tx=0,_ty=0;
+  document.addEventListener('touchstart',function(e){
+    var t=e.touches[0];
+    _tx=t.clientX; _ty=t.clientY;
+  },{passive:true});
+  document.addEventListener('touchend',function(e){
+    var t=e.changedTouches[0];
+    // 5px以内の移動ならタップとみなしてclickを発火
+    if(Math.abs(t.clientX-_tx)<5 && Math.abs(t.clientY-_ty)<5){
+      var el=document.elementFromPoint(t.clientX,t.clientY);
+      if(el && el.id!=='touch-layer' && el.id!=='c3'){
+        e.preventDefault();
+        el.click();
+      }
+    }
+  },{passive:false});
+})();
+
+injectPropArea();
+initThree();
+buildStage();
+buildAllLights();
+rebuildSus();
+
+// Build color presets
+buildPresets('bspcols',h=>{LS.backSus.color=h;document.getElementById('bs-col').value=h;syncLight('backSus');});
+buildPresets('bsbpcols',h=>{LS.backSusB.color=h;document.getElementById('bsb-col').value=h;syncLight('backSusB');});
+buildPresets('bfpcols',h=>{LS.backFoot.color=h;document.getElementById('bf-col').value=h;syncLight('backFoot');});
+buildPresets('fohpcols',h=>{['fohUp','fohLo'].forEach(id=>{LS[id].color=h;});document.getElementById('foh-col').value=h;['fohUp','fohLo'].forEach(syncLight);});
+
+// Bind all intensity sliders
+bindSlider('bs-int','bs-intv',['backSus']);
+bindSlider('bsb-int','bsb-intv',['backSusB']);
+bindSlider('bf-int','bf-intv',['backFoot']);
+bindSlider('foh-int','foh-intv',['fohUp','fohLo']);
+bindSlider('ss1-int','ss1-intv',['ss1LU','ss1LL','ss1RU','ss1RL']);
+bindSlider('ss2-int','ss2-intv',['ss2LU','ss2LL','ss2RU','ss2RL']);
+
+// Fade slider display bindings
+[
+  ['bs-fade','bs-fadev',['backSus']],
+  ['bsb-fade','bsb-fadev',['backSusB']],
+  ['bf-fade','bf-fadev',['backFoot']],
+  ['foh-fade','foh-fadev',['fohUp','fohLo']],
+  ['ss1-fade','ss1-fadev',['ss1LU','ss1LL','ss1RU','ss1RL']],
+  ['ss2-fade','ss2-fadev',['ss2LU','ss2LL','ss2RU','ss2RL']],
+].forEach(([sid,lid,ids])=>{
+  const s=document.getElementById(sid); if(!s)return;
+  s.addEventListener('input',()=>{
+    const v=+s.value;
+    document.getElementById(lid).textContent=v+'s';
+    ids.forEach(id=>{LS[id].fade=v; syncLight(id);});
+  });
+});
+LIGHT_IDS.forEach(id=>{
+  const btn=document.getElementById('lt-'+id);
+  if(btn){const base=btn.textContent.replace(/ ON| OFF/,'').trim();btn.dataset.label=base;btn.textContent=base+' OFF';}
+});
+// Remove old lt-bsP reference — those buttons no longer exist
+
+// Demo dancers
+['田中','佐藤','鈴木','山田','伊藤'].forEach((n,i)=>{
+  const d=mkDancer(n);const sp=ST.stW/5;
+  d.kfs=[{t:0,x:(i-2)*sp,z:(Math.random()-0.5)*3},{t:40,x:(i-2)*sp*0.5,z:(Math.random()-0.5)*3},{t:80,x:(i-2)*sp,z:(Math.random()-0.5)*3}];
+  ST.dancers.push(d);mkDancerMesh(d);
+});
+
+// 起動時に全照明を必ずOFF状態に（localStorageの残骸対策）
+LIGHT_IDS.forEach(id=>{ LS[id].kfs=[{t:0,on:false}]; });
+ST.susLights.forEach(l=>{ l.kfs=[{t:0,on:false}]; });
+
+renderLeft();renderProps();renderWorkList();renderTL();updDash();syncAllLights();
+setView('front');
+setTimeout(()=>{ resize(); updCam(); syncAll(); }, 100);
+setTimeout(()=>{ resize(); updCam(); }, 500);
+requestAnimationFrame(loop);
+
+// ── PWA Service Worker（オフライン対応）──
+if('serviceWorker' in navigator){
+  const swCode=`
+    self.addEventListener('install',()=>self.skipWaiting());
+    self.addEventListener('activate',e=>e.waitUntil(self.clients.claim()));
+    self.addEventListener('fetch',e=>{
+      e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request).catch(()=>new Response(''))));
+    });
+  `;
+  const blob=new Blob([swCode],{type:'application/javascript'});
+  navigator.serviceWorker.register(URL.createObjectURL(blob)).catch(()=>{});
+}
+</script>
+</body>
+</html>
