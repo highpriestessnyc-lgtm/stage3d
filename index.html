@@ -58,8 +58,8 @@ button{-webkit-appearance:none;appearance:none;font-family:inherit;font-size:inh
 .klbl{position:absolute;transform:translate(-50%,2px);color:#5577ee;font-size:9px;padding:1px 5px;background:rgba(0,0,0,.85);border-radius:2px;white-space:nowrap;pointer-events:none;border:1px solid #2233aa44}
 .wlbl{position:absolute;transform:translate(-50%,-50%);color:#667744;font-size:9px;pointer-events:none;font-weight:700;letter-spacing:1px;background:rgba(0,0,0,.6);padding:1px 4px;border-radius:2px}
 #modebar{position:absolute;top:8px;left:50%;transform:translateX(-50%);background:rgba(0,0,14,.92);border:1px solid #2a2a5a;padding:3px 10px;border-radius:12px;font-size:10px;color:#7777bb;pointer-events:none;z-index:5;white-space:nowrap}
-#camrow{position:absolute;top:8px;right:8px;display:flex;gap:3px;z-index:5}
-.cbtn{padding:4px 8px;background:rgba(5,5,15,.92);border:1px solid #1a1a3a;color:#3d3d99;border-radius:4px;cursor:pointer;font-size:10px;touch-action:manipulation;min-height:32px}
+#camrow{position:absolute;top:8px;right:8px;display:flex;gap:3px;z-index:50;pointer-events:all}
+.cbtn{padding:4px 8px;background:rgba(5,5,15,.92);border:1px solid #1a1a3a;color:#3d3d99;border-radius:4px;cursor:pointer;font-size:10px;touch-action:manipulation;min-height:36px;min-width:36px;-webkit-appearance:none;pointer-events:all}
 .cbtn:hover,.cbtn:active{background:#0f0f28;color:#aaaaff}
 #movetip{display:none;position:absolute;bottom:10px;left:50%;transform:translateX(-50%);background:rgba(10,20,120,.94);border:1px solid #2244cc;padding:5px 16px;border-radius:12px;font-size:11px;color:#88aaff;z-index:10;pointer-events:none}
 /* Mobile panel toggles */
@@ -282,12 +282,12 @@ input[type=color].ri{padding:1px;height:22px;cursor:pointer}
     <div id="labels"></div>
     <div id="modebar">人をドラッグして移動　空きエリアドラッグで回転　ピンチでズーム</div>
     <div id="camrow">
-      <button class="cbtn" onclick="setView('front')" ontouchend="setView('front');event.preventDefault()">正面</button>
-      <button class="cbtn" onclick="setView('top')" ontouchend="setView('top');event.preventDefault()">真上</button>
-      <button class="cbtn" onclick="setView('side')" ontouchend="setView('side');event.preventDefault()">側面</button>
-      <button class="cbtn" onclick="zoomStep(-1)" ontouchend="zoomStep(-1);event.preventDefault()" style="font-size:15px;padding:3px 8px" title="ズームイン">＋</button>
-      <button class="cbtn" onclick="zoomStep(1)"  ontouchend="zoomStep(1);event.preventDefault()"  style="font-size:15px;padding:3px 8px" title="ズームアウト">－</button>
-      <button class="cbtn" id="lockbtn" onclick="toggleLock()" ontouchend="toggleLock();event.preventDefault()" style="border-color:#553311;color:#aa6622">🔓 固定</button>
+      <button class="cbtn" onclick="setView('front')" ontouchend="setView('front');event.preventDefault();event.stopPropagation()">正面</button>
+      <button class="cbtn" onclick="setView('top')" ontouchend="setView('top');event.preventDefault();event.stopPropagation()">真上</button>
+      <button class="cbtn" onclick="setView('side')" ontouchend="setView('side');event.preventDefault();event.stopPropagation()">側面</button>
+      <button class="cbtn" onclick="zoomStep(-1)" ontouchend="zoomStep(-1);event.preventDefault();event.stopPropagation()" style="font-size:15px;padding:3px 8px" title="ズームイン">＋</button>
+      <button class="cbtn" onclick="zoomStep(1)" ontouchend="zoomStep(1);event.preventDefault();event.stopPropagation()" style="font-size:15px;padding:3px 8px" title="ズームアウト">－</button>
+      <button class="cbtn" id="lockbtn" onclick="toggleLock()" ontouchend="toggleLock();event.preventDefault();event.stopPropagation()" style="border-color:#553311;color:#aa6622">🔓 固定</button>
       <button class="cbtn" onclick="toggleFullscreen()" id="fsbtn" title="全画面">⛶</button>
     </div>
     <div id="movetip">ステージ or 袖をタップして移動</div>
@@ -326,9 +326,10 @@ input[type=color].ri{padding:1px;height:22px;cursor:pointer}
     <div id="ruler"></div>
 
     <!-- 上段：ダンサー立ち位置KF -->
-    <div style="display:flex;align-items:center;gap:4px">
+    <div style="display:flex;align-items:center;gap:4px;flex-wrap:wrap">
       <span style="font-size:9px;color:#7777aa;min-width:28px;font-weight:700;letter-spacing:.5px">位置</span>
       <button class="tlbtn kf" onclick="addKF()">◆ KF追加</button>
+      <button class="tlbtn" onclick="addHoldKF()" style="color:#ffcc44;border-color:#443300" title="現在の立ち位置のままKFを追加（動かない固定点）">📌 固定</button>
       <button class="tlbtn" onclick="delKF()">削除</button>
       <button class="tlbtn" onclick="copyKFSnapshot()" style="color:#33cc88;border-color:#104430">⧉ コピー</button>
       <button class="tlbtn" id="kfpastebtn" onclick="pasteKFSnapshot()" style="color:#3388ff;border-color:#102240;opacity:0.4;pointer-events:none">⧉ 貼付</button>
@@ -409,6 +410,12 @@ input[type=color].ri{padding:1px;height:22px;cursor:pointer}
     <span>アウト</span>
     <input type="range" id="sus-fadeout" min="0" max="5" step="0.5" value="0" oninput="onSusFadeOutChange(+this.value)">
     <span class="ival" id="sus-fadeoutv">0s</span>
+  </div>
+  <!-- ストロボ -->
+  <div class="irow" style="padding:3px 8px 2px;gap:4px">
+    <button class="ltb" id="strobe-btn" onclick="toggleStrobe()" style="font-size:10px;min-width:60px">⚡ ストロボ</button>
+    <input type="range" id="strobe-hz" min="1" max="20" step="1" value="8" style="flex:1" oninput="document.getElementById('strobe-hzv').textContent=this.value+'Hz'">
+    <span class="ival" id="strobe-hzv">8Hz</span>
   </div>
   <!-- バックサスA 上手/下手 -->
   <div class="ph" style="margin-top:2px"><span class="ph-l" style="font-size:9px">🔦 バックサス 上手/下手</span></div>
@@ -621,6 +628,31 @@ input[type=color].ri{padding:1px;height:22px;cursor:pointer}
     </div>
   </div>
 
+  <div class="ph"><span class="ph-l">🎭 フォーメーション</span></div>
+  <div class="rs">
+    <div style="display:flex;gap:3px;flex-wrap:wrap;margin-bottom:4px">
+      <span style="font-size:9px;color:#33335a;width:100%;padding:2px 0">人数を選択：</span>
+      <button class="pb" onclick="showFormations(7)"  style="flex:1;font-size:11px">7</button>
+      <button class="pb" onclick="showFormations(8)"  style="flex:1;font-size:11px">8</button>
+      <button class="pb" onclick="showFormations(9)"  style="flex:1;font-size:11px">9</button>
+      <button class="pb" onclick="showFormations(10)" style="flex:1;font-size:11px">10</button>
+      <button class="pb" onclick="showFormations(11)" style="flex:1;font-size:11px">11</button>
+      <button class="pb" onclick="showFormations(12)" style="flex:1;font-size:11px">12</button>
+      <button class="pb" onclick="showFormations(13)" style="flex:1;font-size:11px">13</button>
+      <button class="pb" onclick="showFormations(14)" style="flex:1;font-size:11px">14</button>
+      <button class="pb" onclick="showFormations(15)" style="flex:1;font-size:11px">15</button>
+      <button class="pb" onclick="showFormations(16)" style="flex:1;font-size:11px">16</button>
+      <button class="pb" onclick="showFormations(17)" style="flex:1;font-size:11px">17</button>
+      <button class="pb" onclick="showFormations(18)" style="flex:1;font-size:11px">18</button>
+      <button class="pb" onclick="showFormations(19)" style="flex:1;font-size:11px">19</button>
+      <button class="pb" onclick="showFormations(20)" style="flex:1;font-size:11px">20</button>
+      <button class="pb" onclick="showShapeFormations()" style="width:100%;color:#ffaa33;border-color:#443300;margin-top:2px;font-size:11px">⭕🔺 形状（円・三角・2重円…）</button>
+    </div>
+    <div id="formation-list" style="display:none">
+      <div id="formation-btns" style="display:flex;flex-direction:column;gap:3px"></div>
+    </div>
+  </div>
+
   <div class="ph"><span class="ph-l">📤 ファイル</span></div>
   <div class="rs">
     <div class="pbtns" style="padding:0">
@@ -756,7 +788,6 @@ document.addEventListener('fullscreenchange',()=>{
 // 選択したパターンのサスをON、それ以外はOFFにする
 function susPat(pat){
   const R=ST.susR, C=ST.susC;
-  // パターン該当サスを特定
   const match=l=>{
     const r=l.r,c=l.c;
     switch(pat){
@@ -775,9 +806,13 @@ function susPat(pat){
   // 全部ONならOFFに、そうでなければONに（トグル）
   const allOn=targets.length>0&&targets.every(l=>getOnAt(l.kfs,ST.t));
   const newOn=!allOn;
-  targets.forEach(l=>{
+
+  // ★ 全サスにKFを記録（対象=newOn、対象外=false）
+  // これで再生中に「前回のON状態が残る」バグを防ぐ
+  ST.susLights.forEach(l=>{
+    const on=match(l)?newOn:false;
     const ex=l.kfs.find(k=>Math.abs(k.t-ST.t)<0.15);
-    if(ex)ex.on=newOn; else{l.kfs.push({t:ST.t,on:newOn});l.kfs.sort((a,b)=>a.t-b.t);}
+    if(ex)ex.on=on; else{l.kfs.push({t:ST.t,on});l.kfs.sort((a,b)=>a.t-b.t);}
     syncSusMesh(l);
   });
   updSusUI();renderTL();
@@ -839,26 +874,30 @@ function buildSusRowUI(){
   }
 }
 function susRowToggle(row){
-  const lights=ST.susLights.filter(l=>l.r===row);
-  const anyOn=lights.some(l=>getOnAt(l.kfs,ST.t));
-  lights.forEach(l=>{
+  const inRow=ST.susLights.filter(l=>l.r===row);
+  const anyOn=inRow.some(l=>getOnAt(l.kfs,ST.t));
+  const newOn=!anyOn;
+  // 全サスにKFを記録（対象行=newOn、それ以外=現在値をそのまま記録）
+  ST.susLights.forEach(l=>{
+    const on=l.r===row?newOn:getOnAt(l.kfs,ST.t);
     const ex=l.kfs.find(k=>Math.abs(k.t-ST.t)<0.15);
-    const on=!anyOn;
     if(ex)ex.on=on; else{l.kfs.push({t:ST.t,on});l.kfs.sort((a,b)=>a.t-b.t);}
     syncSusMesh(l);
   });
-  updSusUI();renderTL();showMode(`${row+1}行 ${anyOn?'OFF':'ON'}`);
+  updSusUI();renderTL();showMode(`${row+1}行 ${newOn?'ON':'OFF'}`);
 }
 function susColToggle(col){
-  const lights=ST.susLights.filter(l=>l.c===col);
-  const anyOn=lights.some(l=>getOnAt(l.kfs,ST.t));
-  lights.forEach(l=>{
+  const inCol=ST.susLights.filter(l=>l.c===col);
+  const anyOn=inCol.some(l=>getOnAt(l.kfs,ST.t));
+  const newOn=!anyOn;
+  // 全サスにKFを記録（対象列=newOn、それ以外=現在値をそのまま記録）
+  ST.susLights.forEach(l=>{
+    const on=l.c===col?newOn:getOnAt(l.kfs,ST.t);
     const ex=l.kfs.find(k=>Math.abs(k.t-ST.t)<0.15);
-    const on=!anyOn;
     if(ex)ex.on=on; else{l.kfs.push({t:ST.t,on});l.kfs.sort((a,b)=>a.t-b.t);}
     syncSusMesh(l);
   });
-  updSusUI();renderTL();showMode(`${col+1}列 ${anyOn?'OFF':'ON'}`);
+  updSusUI();renderTL();showMode(`${col+1}列 ${newOn?'ON':'OFF'}`);
 }
 
 function toggleLock(){
@@ -1183,6 +1222,53 @@ let _susFadeIn=0, _susFadeOut=0;
 function onSusFadeChange(v){ _susFadeIn=v; _susFadeOut=v; document.getElementById('sus-fadev').textContent=v+'s'; }
 function onSusFadeInChange(v){ _susFadeIn=v; document.getElementById('sus-fadeinv').textContent=v+'s'; }
 function onSusFadeOutChange(v){ _susFadeOut=v; document.getElementById('sus-fadeoutv').textContent=v+'s'; }
+
+// ── ストロボ ──
+let _strobeOn = false;
+let _strobeTimer = null;
+let _strobePhase = false; // true=点灯 false=消灯
+
+function toggleStrobe(){
+  _strobeOn = !_strobeOn;
+  const btn = document.getElementById('strobe-btn');
+  if(_strobeOn){
+    btn.textContent = '⚡ 停止';
+    btn.style.color = '#ffff00';
+    btn.style.background = '#1a1a00';
+    btn.style.borderColor = '#888800';
+    _runStrobe();
+    showMode('⚡ ストロボ ON');
+  } else {
+    btn.textContent = '⚡ ストロボ';
+    btn.style.color = '';
+    btn.style.background = '';
+    btn.style.borderColor = '';
+    if(_strobeTimer){ clearTimeout(_strobeTimer); _strobeTimer=null; }
+    // ストロボ終了時に現在のKF状態に戻す
+    ST.susLights.forEach(l=>syncSusMesh(l));
+    showMode('⚡ ストロボ OFF');
+  }
+}
+
+function _runStrobe(){
+  if(!_strobeOn) return;
+  const hz = parseInt(document.getElementById('strobe-hz').value) || 8;
+  const interval = 1000 / (hz * 2); // ON+OFFで1周期
+  _strobePhase = !_strobePhase;
+
+  ST.susLights.forEach(l=>{
+    const m = susMeshes[l.id]; if(!m) return;
+    const isOn = getOnAt(l.kfs, ST.t);
+    if(!isOn) return; // 消灯中のサスはストロボしない
+    const c = new THREE.Color(document.getElementById('susCol').value || '#ffbb44');
+    m.g.visible = _strobePhase;
+    m.spot.intensity = _strobePhase ? 2.2 : 0;
+    m.cone.material.opacity = _strobePhase ? 0.08 : 0;
+    m.fc.material.opacity = _strobePhase ? 0.2 : 0;
+  });
+
+  _strobeTimer = setTimeout(_runStrobe, interval);
+}
 
 function syncSusMesh(l){
   const m=susMeshes[l.id]; if(!m)return;
@@ -2125,8 +2211,38 @@ function seekTo(t){
     }
   });
   LIGHT_IDS.forEach(syncLightPreview);
+  // 選択ダンサーの近くにKFがあればdurをスライダーに反映
+  const selD=ST.dancers.find(d=>d.id===ST.selId);
+  if(selD){
+    const nearKF=selD.kfs.find(k=>Math.abs(k.t-ST.t)<0.3);
+    if(nearKF&&nearKF.dur!==undefined){
+      _kfMoveDur=nearKF.dur;
+      const sl=document.getElementById('kf-dur');
+      const lb=document.getElementById('kf-durv');
+      if(sl)sl.value=_kfMoveDur;
+      if(lb)lb.textContent=_kfMoveDur===0?'固定':_kfMoveDur+'s';
+    }
+  }
   renderTL();syncAll();renderProps();updDash();updSusUI();
 }
+// 📌 固定KF：現在の立ち位置のままKFを追加（動かない固定点を作る）
+// 使い方: 「ここまで動かない」という時刻でこのボタンを押す
+function addHoldKF(){
+  const d=ST.dancers.find(d=>d.id===ST.selId);
+  if(!d){ showMode('⚠ ダンサーを選択してください'); return; }
+  if(ST.playing) togglePlay();
+  const t=Math.round(ST.t*10)/10;
+  seekTo(t);
+  const existing=d.kfs.find(k=>Math.abs(k.t-t)<0.3);
+  if(existing){ showMode(`⚠ ${fmt(t)} 付近にすでにKFがあります`); return; }
+  // 現在の補間位置（今いる場所）でKFを追加
+  const p=interpPos(d,t);
+  d.kfs.push({t,x:p.x,z:p.z});
+  d.kfs.sort((a,b)=>a.t-b.t);
+  renderTL();syncAll();
+  showMode(`📌 固定KF追加: ${d.name} @ ${fmt(t)} — ここまで動きません`);
+}
+
 function addKF(){
   const d=ST.dancers.find(d=>d.id===ST.selId);
   if(!d){ showMode('⚠ ダンサーを選択してください'); return; }
@@ -2138,7 +2254,12 @@ function addKF(){
   const t = Math.round(ST.t * 10) / 10;
   seekTo(t); // 丸めた時刻に合わせる
 
-  const p = interpPos(d, t);
+  // ダンサーの現在の視覚的な位置を取得（Three.jsメッシュから直接）
+  // dur>0の場合、interpPosは前のKF位置を返してしまうのでメッシュ位置を優先
+  const mesh = dMesh[d.id];
+  const p = mesh
+    ? {x: mesh.position.x, z: mesh.position.z}
+    : interpPos(d, t);
 
   // 重複チェックは0.3秒以内（丸め誤差を吸収）
   const existing = d.kfs.find(k => Math.abs(k.t - t) < 0.3);
@@ -2147,7 +2268,7 @@ function addKF(){
     return;
   }
 
-  d.kfs.push({t, x:p.x, z:p.z});
+  d.kfs.push({t, x:p.x, z:p.z, dur: _kfMoveDur});
   d.kfs.sort((a,b)=>a.t-b.t);
 
   renderTL(); syncAll();
@@ -2221,6 +2342,7 @@ function nudgeDancer(dx, dz){
 let _kfSnapshot = null; // {dancerId: {x, z}, ...}
 let tlZoom = 1;         // タイムラインズーム倍率
 let tlOffset = 0;       // ズーム時の表示開始位置（秒）
+let _kfMoveDur = 0;     // KF追加時の移動時間（秒）。0=固定
 
 // ── 照明KF削除 ──
 // ── 全KFリセット ──
@@ -3046,6 +3168,247 @@ h1{font-size:16px;font-weight:800;color:#1133aa;margin-bottom:3px}
   w.document.close();
   setTimeout(()=>w.print(),800);
 }
+// ════════════════════════════════
+// フォーメーションプリセット
+// ════════════════════════════════
+const FORMATIONS={
+  7:[
+    {name:'4-3 前多スタッグル',pos:[[-3.75,1.5],[-1.25,1.5],[1.25,1.5],[3.75,1.5],[-2.5,-1.5],[0.0,-1.5],[2.5,-1.5]]},
+    {name:'3-4 後多スタッグル',pos:[[-2.5,1.5],[0.0,1.5],[2.5,1.5],[-3.75,-1.5],[-1.25,-1.5],[1.25,-1.5],[3.75,-1.5]]},
+    {name:'2-2-3 3列スタッグル',pos:[[-1.25,3.0],[1.25,3.0],[-1.25,0.5],[1.25,0.5],[-2.5,-2.0],[0.0,-2.0],[2.5,-2.0]]},
+    {name:'3-2-2 前多3列スタッグル',pos:[[-2.5,3.0],[0.0,3.0],[2.5,3.0],[-1.25,0.5],[1.25,0.5],[-1.25,-2.0],[1.25,-2.0]]},
+    {name:'1-2-2-2 4列スタッグル',pos:[[0.0,4.0],[-1.25,1.5],[1.25,1.5],[-1.25,-1.0],[1.25,-1.0],[-1.25,-3.5],[1.25,-3.5]]},
+  ],
+  8:[
+    {name:'4-4 前多スタッグル',pos:[[-3.3,1.5],[-1.1,1.5],[1.1,1.5],[3.3,1.5],[-3.3,-1.5],[-1.1,-1.5],[1.1,-1.5],[3.3,-1.5]]},
+    {name:'5-3 後多スタッグル',pos:[[-4.4,1.5],[-2.2,1.5],[0.0,1.5],[2.2,1.5],[4.4,1.5],[-2.2,-1.5],[0.0,-1.5],[2.2,-1.5]]},
+    {name:'2-3-3 3列スタッグル',pos:[[-1.1,3.0],[1.1,3.0],[-2.2,0.5],[0.0,0.5],[2.2,0.5],[-2.2,-2.0],[0.0,-2.0],[2.2,-2.0]]},
+    {name:'3-3-2 前多3列スタッグル',pos:[[-2.2,3.0],[0.0,3.0],[2.2,3.0],[-2.2,0.5],[0.0,0.5],[2.2,0.5],[-1.1,-2.0],[1.1,-2.0]]},
+    {name:'2-2-2-2 4列スタッグル',pos:[[-1.1,4.0],[1.1,4.0],[-1.1,1.5],[1.1,1.5],[-1.1,-1.0],[1.1,-1.0],[-1.1,-3.5],[1.1,-3.5]]},
+  ],
+  9:[
+    {name:'5-4 前多スタッグル',pos:[[-4.4,1.5],[-2.2,1.5],[0.0,1.5],[2.2,1.5],[4.4,1.5],[-3.3,-1.5],[-1.1,-1.5],[1.1,-1.5],[3.3,-1.5]]},
+    {name:'4-5 後多スタッグル',pos:[[-3.3,1.5],[-1.1,1.5],[1.1,1.5],[3.3,1.5],[-4.4,-1.5],[-2.2,-1.5],[0.0,-1.5],[2.2,-1.5],[4.4,-1.5]]},
+    {name:'3-3-3 3列スタッグル',pos:[[-2.2,3.0],[0.0,3.0],[2.2,3.0],[-2.2,0.5],[0.0,0.5],[2.2,0.5],[-2.2,-2.0],[0.0,-2.0],[2.2,-2.0]]},
+    {name:'3-3-3 前多3列スタッグル',pos:[[-2.2,3.0],[0.0,3.0],[2.2,3.0],[-2.2,0.5],[0.0,0.5],[2.2,0.5],[-2.2,-2.0],[0.0,-2.0],[2.2,-2.0]]},
+    {name:'2-2-2-3 4列スタッグル',pos:[[-1.1,4.0],[1.1,4.0],[-1.1,1.5],[1.1,1.5],[-1.1,-1.0],[1.1,-1.0],[-2.2,-3.5],[0.0,-3.5],[2.2,-3.5]]},
+  ],
+  10:[
+    {name:'5-5 前多スタッグル',pos:[[-4.0,1.5],[-2.0,1.5],[0.0,1.5],[2.0,1.5],[4.0,1.5],[-4.0,-1.5],[-2.0,-1.5],[0.0,-1.5],[2.0,-1.5],[4.0,-1.5]]},
+    {name:'6-4 後多スタッグル',pos:[[-5.0,1.5],[-3.0,1.5],[-1.0,1.5],[1.0,1.5],[3.0,1.5],[5.0,1.5],[-3.0,-1.5],[-1.0,-1.5],[1.0,-1.5],[3.0,-1.5]]},
+    {name:'3-3-4 3列スタッグル',pos:[[-2.0,3.0],[0.0,3.0],[2.0,3.0],[-2.0,0.5],[0.0,0.5],[2.0,0.5],[-3.0,-2.0],[-1.0,-2.0],[1.0,-2.0],[3.0,-2.0]]},
+    {name:'4-3-3 前多3列スタッグル',pos:[[-3.0,3.0],[-1.0,3.0],[1.0,3.0],[3.0,3.0],[-2.0,0.5],[0.0,0.5],[2.0,0.5],[-2.0,-2.0],[0.0,-2.0],[2.0,-2.0]]},
+    {name:'2-2-3-3 4列スタッグル',pos:[[-1.0,4.0],[1.0,4.0],[-1.0,1.5],[1.0,1.5],[-2.0,-1.0],[0.0,-1.0],[2.0,-1.0],[-2.0,-3.5],[0.0,-3.5],[2.0,-3.5]]},
+  ],
+  11:[
+    {name:'6-5 前多スタッグル',pos:[[-5.0,1.5],[-3.0,1.5],[-1.0,1.5],[1.0,1.5],[3.0,1.5],[5.0,1.5],[-4.0,-1.5],[-2.0,-1.5],[0.0,-1.5],[2.0,-1.5],[4.0,-1.5]]},
+    {name:'5-6 後多スタッグル',pos:[[-4.0,1.5],[-2.0,1.5],[0.0,1.5],[2.0,1.5],[4.0,1.5],[-5.0,-1.5],[-3.0,-1.5],[-1.0,-1.5],[1.0,-1.5],[3.0,-1.5],[5.0,-1.5]]},
+    {name:'3-4-4 3列スタッグル',pos:[[-2.0,3.0],[0.0,3.0],[2.0,3.0],[-3.0,0.5],[-1.0,0.5],[1.0,0.5],[3.0,0.5],[-3.0,-2.0],[-1.0,-2.0],[1.0,-2.0],[3.0,-2.0]]},
+    {name:'4-4-3 前多3列スタッグル',pos:[[-3.0,3.0],[-1.0,3.0],[1.0,3.0],[3.0,3.0],[-3.0,0.5],[-1.0,0.5],[1.0,0.5],[3.0,0.5],[-2.0,-2.0],[0.0,-2.0],[2.0,-2.0]]},
+    {name:'2-3-3-3 4列スタッグル',pos:[[-1.0,4.0],[1.0,4.0],[-2.0,1.5],[0.0,1.5],[2.0,1.5],[-2.0,-1.0],[0.0,-1.0],[2.0,-1.0],[-2.0,-3.5],[0.0,-3.5],[2.0,-3.5]]},
+  ],
+  12:[
+    {name:'6-6 前多スタッグル',pos:[[-4.5,1.5],[-2.7,1.5],[-0.9,1.5],[0.9,1.5],[2.7,1.5],[4.5,1.5],[-4.5,-1.5],[-2.7,-1.5],[-0.9,-1.5],[0.9,-1.5],[2.7,-1.5],[4.5,-1.5]]},
+    {name:'7-5 後多スタッグル',pos:[[-5.4,1.5],[-3.6,1.5],[-1.8,1.5],[0.0,1.5],[1.8,1.5],[3.6,1.5],[5.4,1.5],[-3.6,-1.5],[-1.8,-1.5],[0.0,-1.5],[1.8,-1.5],[3.6,-1.5]]},
+    {name:'4-4-4 3列スタッグル',pos:[[-2.7,3.0],[-0.9,3.0],[0.9,3.0],[2.7,3.0],[-2.7,0.5],[-0.9,0.5],[0.9,0.5],[2.7,0.5],[-2.7,-2.0],[-0.9,-2.0],[0.9,-2.0],[2.7,-2.0]]},
+    {name:'4-4-4 前多3列スタッグル',pos:[[-2.7,3.0],[-0.9,3.0],[0.9,3.0],[2.7,3.0],[-2.7,0.5],[-0.9,0.5],[0.9,0.5],[2.7,0.5],[-2.7,-2.0],[-0.9,-2.0],[0.9,-2.0],[2.7,-2.0]]},
+    {name:'3-3-3-3 4列スタッグル',pos:[[-1.8,4.0],[0.0,4.0],[1.8,4.0],[-1.8,1.5],[0.0,1.5],[1.8,1.5],[-1.8,-1.0],[0.0,-1.0],[1.8,-1.0],[-1.8,-3.5],[0.0,-3.5],[1.8,-3.5]]},
+  ],
+  13:[
+    {name:'7-6 前多スタッグル',pos:[[-5.4,1.5],[-3.6,1.5],[-1.8,1.5],[0.0,1.5],[1.8,1.5],[3.6,1.5],[5.4,1.5],[-4.5,-1.5],[-2.7,-1.5],[-0.9,-1.5],[0.9,-1.5],[2.7,-1.5],[4.5,-1.5]]},
+    {name:'6-7 後多スタッグル',pos:[[-4.5,1.5],[-2.7,1.5],[-0.9,1.5],[0.9,1.5],[2.7,1.5],[4.5,1.5],[-5.4,-1.5],[-3.6,-1.5],[-1.8,-1.5],[0.0,-1.5],[1.8,-1.5],[3.6,-1.5],[5.4,-1.5]]},
+    {name:'4-4-5 3列スタッグル',pos:[[-2.7,3.0],[-0.9,3.0],[0.9,3.0],[2.7,3.0],[-2.7,0.5],[-0.9,0.5],[0.9,0.5],[2.7,0.5],[-3.6,-2.0],[-1.8,-2.0],[0.0,-2.0],[1.8,-2.0],[3.6,-2.0]]},
+    {name:'5-4-4 前多3列スタッグル',pos:[[-3.6,3.0],[-1.8,3.0],[0.0,3.0],[1.8,3.0],[3.6,3.0],[-2.7,0.5],[-0.9,0.5],[0.9,0.5],[2.7,0.5],[-2.7,-2.0],[-0.9,-2.0],[0.9,-2.0],[2.7,-2.0]]},
+    {name:'3-3-3-4 4列スタッグル',pos:[[-1.8,4.0],[0.0,4.0],[1.8,4.0],[-1.8,1.5],[0.0,1.5],[1.8,1.5],[-1.8,-1.0],[0.0,-1.0],[1.8,-1.0],[-2.7,-3.5],[-0.9,-3.5],[0.9,-3.5],[2.7,-3.5]]},
+  ],
+  14:[
+    {name:'7-7 前多スタッグル',pos:[[-5.4,1.5],[-3.6,1.5],[-1.8,1.5],[0.0,1.5],[1.8,1.5],[3.6,1.5],[5.4,1.5],[-5.4,-1.5],[-3.6,-1.5],[-1.8,-1.5],[0.0,-1.5],[1.8,-1.5],[3.6,-1.5],[5.4,-1.5]]},
+    {name:'8-6 後多スタッグル',pos:[[-6.3,1.5],[-4.5,1.5],[-2.7,1.5],[-0.9,1.5],[0.9,1.5],[2.7,1.5],[4.5,1.5],[6.3,1.5],[-4.5,-1.5],[-2.7,-1.5],[-0.9,-1.5],[0.9,-1.5],[2.7,-1.5],[4.5,-1.5]]},
+    {name:'4-5-5 3列スタッグル',pos:[[-2.7,3.0],[-0.9,3.0],[0.9,3.0],[2.7,3.0],[-3.6,0.5],[-1.8,0.5],[0.0,0.5],[1.8,0.5],[3.6,0.5],[-3.6,-2.0],[-1.8,-2.0],[0.0,-2.0],[1.8,-2.0],[3.6,-2.0]]},
+    {name:'5-5-4 前多3列スタッグル',pos:[[-3.6,3.0],[-1.8,3.0],[0.0,3.0],[1.8,3.0],[3.6,3.0],[-3.6,0.5],[-1.8,0.5],[0.0,0.5],[1.8,0.5],[3.6,0.5],[-2.7,-2.0],[-0.9,-2.0],[0.9,-2.0],[2.7,-2.0]]},
+    {name:'3-3-4-4 4列スタッグル',pos:[[-1.8,4.0],[0.0,4.0],[1.8,4.0],[-1.8,1.5],[0.0,1.5],[1.8,1.5],[-2.7,-1.0],[-0.9,-1.0],[0.9,-1.0],[2.7,-1.0],[-2.7,-3.5],[-0.9,-3.5],[0.9,-3.5],[2.7,-3.5]]},
+  ],
+  15:[
+    {name:'8-7 前多スタッグル',pos:[[-6.3,1.5],[-4.5,1.5],[-2.7,1.5],[-0.9,1.5],[0.9,1.5],[2.7,1.5],[4.5,1.5],[6.3,1.5],[-5.4,-1.5],[-3.6,-1.5],[-1.8,-1.5],[0.0,-1.5],[1.8,-1.5],[3.6,-1.5],[5.4,-1.5]]},
+    {name:'7-8 後多スタッグル',pos:[[-5.4,1.5],[-3.6,1.5],[-1.8,1.5],[0.0,1.5],[1.8,1.5],[3.6,1.5],[5.4,1.5],[-6.3,-1.5],[-4.5,-1.5],[-2.7,-1.5],[-0.9,-1.5],[0.9,-1.5],[2.7,-1.5],[4.5,-1.5],[6.3,-1.5]]},
+    {name:'5-5-5 3列スタッグル',pos:[[-3.6,3.0],[-1.8,3.0],[0.0,3.0],[1.8,3.0],[3.6,3.0],[-3.6,0.5],[-1.8,0.5],[0.0,0.5],[1.8,0.5],[3.6,0.5],[-3.6,-2.0],[-1.8,-2.0],[0.0,-2.0],[1.8,-2.0],[3.6,-2.0]]},
+    {name:'5-5-5 前多3列スタッグル',pos:[[-3.6,3.0],[-1.8,3.0],[0.0,3.0],[1.8,3.0],[3.6,3.0],[-3.6,0.5],[-1.8,0.5],[0.0,0.5],[1.8,0.5],[3.6,0.5],[-3.6,-2.0],[-1.8,-2.0],[0.0,-2.0],[1.8,-2.0],[3.6,-2.0]]},
+    {name:'3-4-4-4 4列スタッグル',pos:[[-1.8,4.0],[0.0,4.0],[1.8,4.0],[-2.7,1.5],[-0.9,1.5],[0.9,1.5],[2.7,1.5],[-2.7,-1.0],[-0.9,-1.0],[0.9,-1.0],[2.7,-1.0],[-2.7,-3.5],[-0.9,-3.5],[0.9,-3.5],[2.7,-3.5]]},
+  ],
+  16:[
+    {name:'8-8 前多スタッグル',pos:[[-6.3,1.5],[-4.5,1.5],[-2.7,1.5],[-0.9,1.5],[0.9,1.5],[2.7,1.5],[4.5,1.5],[6.3,1.5],[-6.3,-1.5],[-4.5,-1.5],[-2.7,-1.5],[-0.9,-1.5],[0.9,-1.5],[2.7,-1.5],[4.5,-1.5],[6.3,-1.5]]},
+    {name:'9-7 後多スタッグル',pos:[[-7.2,1.5],[-5.4,1.5],[-3.6,1.5],[-1.8,1.5],[0.0,1.5],[1.8,1.5],[3.6,1.5],[5.4,1.5],[7.2,1.5],[-5.4,-1.5],[-3.6,-1.5],[-1.8,-1.5],[0.0,-1.5],[1.8,-1.5],[3.6,-1.5],[5.4,-1.5]]},
+    {name:'5-5-6 3列スタッグル',pos:[[-3.6,3.0],[-1.8,3.0],[0.0,3.0],[1.8,3.0],[3.6,3.0],[-3.6,0.5],[-1.8,0.5],[0.0,0.5],[1.8,0.5],[3.6,0.5],[-4.5,-2.0],[-2.7,-2.0],[-0.9,-2.0],[0.9,-2.0],[2.7,-2.0],[4.5,-2.0]]},
+    {name:'6-5-5 前多3列スタッグル',pos:[[-4.5,3.0],[-2.7,3.0],[-0.9,3.0],[0.9,3.0],[2.7,3.0],[4.5,3.0],[-3.6,0.5],[-1.8,0.5],[0.0,0.5],[1.8,0.5],[3.6,0.5],[-3.6,-2.0],[-1.8,-2.0],[0.0,-2.0],[1.8,-2.0],[3.6,-2.0]]},
+    {name:'4-4-4-4 4列スタッグル',pos:[[-2.7,4.0],[-0.9,4.0],[0.9,4.0],[2.7,4.0],[-2.7,1.5],[-0.9,1.5],[0.9,1.5],[2.7,1.5],[-2.7,-1.0],[-0.9,-1.0],[0.9,-1.0],[2.7,-1.0],[-2.7,-3.5],[-0.9,-3.5],[0.9,-3.5],[2.7,-3.5]]},
+  ],
+  17:[
+    {name:'9-8 前多スタッグル',pos:[[-7.2,1.5],[-5.4,1.5],[-3.6,1.5],[-1.8,1.5],[0.0,1.5],[1.8,1.5],[3.6,1.5],[5.4,1.5],[7.2,1.5],[-6.3,-1.5],[-4.5,-1.5],[-2.7,-1.5],[-0.9,-1.5],[0.9,-1.5],[2.7,-1.5],[4.5,-1.5],[6.3,-1.5]]},
+    {name:'8-9 後多スタッグル',pos:[[-6.3,1.5],[-4.5,1.5],[-2.7,1.5],[-0.9,1.5],[0.9,1.5],[2.7,1.5],[4.5,1.5],[6.3,1.5],[-7.2,-1.5],[-5.4,-1.5],[-3.6,-1.5],[-1.8,-1.5],[0.0,-1.5],[1.8,-1.5],[3.6,-1.5],[5.4,-1.5],[7.2,-1.5]]},
+    {name:'5-6-6 3列スタッグル',pos:[[-3.6,3.0],[-1.8,3.0],[0.0,3.0],[1.8,3.0],[3.6,3.0],[-4.5,0.5],[-2.7,0.5],[-0.9,0.5],[0.9,0.5],[2.7,0.5],[4.5,0.5],[-4.5,-2.0],[-2.7,-2.0],[-0.9,-2.0],[0.9,-2.0],[2.7,-2.0],[4.5,-2.0]]},
+    {name:'6-6-5 前多3列スタッグル',pos:[[-4.5,3.0],[-2.7,3.0],[-0.9,3.0],[0.9,3.0],[2.7,3.0],[4.5,3.0],[-4.5,0.5],[-2.7,0.5],[-0.9,0.5],[0.9,0.5],[2.7,0.5],[4.5,0.5],[-3.6,-2.0],[-1.8,-2.0],[0.0,-2.0],[1.8,-2.0],[3.6,-2.0]]},
+    {name:'4-4-4-5 4列スタッグル',pos:[[-2.7,4.0],[-0.9,4.0],[0.9,4.0],[2.7,4.0],[-2.7,1.5],[-0.9,1.5],[0.9,1.5],[2.7,1.5],[-2.7,-1.0],[-0.9,-1.0],[0.9,-1.0],[2.7,-1.0],[-3.6,-3.5],[-1.8,-3.5],[0.0,-3.5],[1.8,-3.5],[3.6,-3.5]]},
+  ],
+  18:[
+    {name:'9-9 前多スタッグル',pos:[[-7.2,1.5],[-5.4,1.5],[-3.6,1.5],[-1.8,1.5],[0.0,1.5],[1.8,1.5],[3.6,1.5],[5.4,1.5],[7.2,1.5],[-7.2,-1.5],[-5.4,-1.5],[-3.6,-1.5],[-1.8,-1.5],[0.0,-1.5],[1.8,-1.5],[3.6,-1.5],[5.4,-1.5],[7.2,-1.5]]},
+    {name:'10-8 後多スタッグル',pos:[[-7.2,1.5],[-5.6,1.5],[-4.0,1.5],[-2.4,1.5],[-0.8,1.5],[0.8,1.5],[2.4,1.5],[4.0,1.5],[5.6,1.5],[7.2,1.5],[-6.3,-1.5],[-4.5,-1.5],[-2.7,-1.5],[-0.9,-1.5],[0.9,-1.5],[2.7,-1.5],[4.5,-1.5],[6.3,-1.5]]},
+    {name:'6-6-6 3列スタッグル',pos:[[-4.5,3.0],[-2.7,3.0],[-0.9,3.0],[0.9,3.0],[2.7,3.0],[4.5,3.0],[-4.5,0.5],[-2.7,0.5],[-0.9,0.5],[0.9,0.5],[2.7,0.5],[4.5,0.5],[-4.5,-2.0],[-2.7,-2.0],[-0.9,-2.0],[0.9,-2.0],[2.7,-2.0],[4.5,-2.0]]},
+    {name:'6-6-6 前多3列スタッグル',pos:[[-4.5,3.0],[-2.7,3.0],[-0.9,3.0],[0.9,3.0],[2.7,3.0],[4.5,3.0],[-4.5,0.5],[-2.7,0.5],[-0.9,0.5],[0.9,0.5],[2.7,0.5],[4.5,0.5],[-4.5,-2.0],[-2.7,-2.0],[-0.9,-2.0],[0.9,-2.0],[2.7,-2.0],[4.5,-2.0]]},
+    {name:'4-4-5-5 4列スタッグル',pos:[[-2.7,4.0],[-0.9,4.0],[0.9,4.0],[2.7,4.0],[-2.7,1.5],[-0.9,1.5],[0.9,1.5],[2.7,1.5],[-3.6,-1.0],[-1.8,-1.0],[0.0,-1.0],[1.8,-1.0],[3.6,-1.0],[-3.6,-3.5],[-1.8,-3.5],[0.0,-3.5],[1.8,-3.5],[3.6,-3.5]]},
+  ],
+  19:[
+    {name:'10-9 前多スタッグル',pos:[[-8.0,1.5],[-6.3,1.5],[-4.5,1.5],[-2.7,1.5],[-0.9,1.5],[0.9,1.5],[2.7,1.5],[4.5,1.5],[6.3,1.5],[8.0,1.5],[-7.2,-1.5],[-5.4,-1.5],[-3.6,-1.5],[-1.8,-1.5],[0.0,-1.5],[1.8,-1.5],[3.6,-1.5],[5.4,-1.5],[7.2,-1.5]]},
+    {name:'9-10 後多スタッグル',pos:[[-7.2,1.5],[-5.4,1.5],[-3.6,1.5],[-1.8,1.5],[0.0,1.5],[1.8,1.5],[3.6,1.5],[5.4,1.5],[7.2,1.5],[-8.0,-1.5],[-6.3,-1.5],[-4.5,-1.5],[-2.7,-1.5],[-0.9,-1.5],[0.9,-1.5],[2.7,-1.5],[4.5,-1.5],[6.3,-1.5],[8.0,-1.5]]},
+    {name:'6-6-7 3列スタッグル',pos:[[-4.5,3.0],[-2.7,3.0],[-0.9,3.0],[0.9,3.0],[2.7,3.0],[4.5,3.0],[-4.5,0.5],[-2.7,0.5],[-0.9,0.5],[0.9,0.5],[2.7,0.5],[4.5,0.5],[-5.4,-2.0],[-3.6,-2.0],[-1.8,-2.0],[0.0,-2.0],[1.8,-2.0],[3.6,-2.0],[5.4,-2.0]]},
+    {name:'7-6-6 前多3列スタッグル',pos:[[-5.4,3.0],[-3.6,3.0],[-1.8,3.0],[0.0,3.0],[1.8,3.0],[3.6,3.0],[5.4,3.0],[-4.5,0.5],[-2.7,0.5],[-0.9,0.5],[0.9,0.5],[2.7,0.5],[4.5,0.5],[-4.5,-2.0],[-2.7,-2.0],[-0.9,-2.0],[0.9,-2.0],[2.7,-2.0],[4.5,-2.0]]},
+    {name:'4-5-5-5 4列スタッグル',pos:[[-2.7,4.0],[-0.9,4.0],[0.9,4.0],[2.7,4.0],[-3.6,1.5],[-1.8,1.5],[0.0,1.5],[1.8,1.5],[3.6,1.5],[-3.6,-1.0],[-1.8,-1.0],[0.0,-1.0],[1.8,-1.0],[3.6,-1.0],[-3.6,-3.5],[-1.8,-3.5],[0.0,-3.5],[1.8,-3.5],[3.6,-3.5]]},
+  ],
+  20:[
+    {name:'10-10 前多スタッグル',pos:[[-8.0,1.5],[-6.3,1.5],[-4.5,1.5],[-2.7,1.5],[-0.9,1.5],[0.9,1.5],[2.7,1.5],[4.5,1.5],[6.3,1.5],[8.0,1.5],[-8.0,-1.5],[-6.3,-1.5],[-4.5,-1.5],[-2.7,-1.5],[-0.9,-1.5],[0.9,-1.5],[2.7,-1.5],[4.5,-1.5],[6.3,-1.5],[8.0,-1.5]]},
+    {name:'11-9 後多スタッグル',pos:[[-8.0,1.5],[-6.4,1.5],[-4.8,1.5],[-3.2,1.5],[-1.6,1.5],[0.0,1.5],[1.6,1.5],[3.2,1.5],[4.8,1.5],[6.4,1.5],[8.0,1.5],[-7.2,-1.5],[-5.4,-1.5],[-3.6,-1.5],[-1.8,-1.5],[0.0,-1.5],[1.8,-1.5],[3.6,-1.5],[5.4,-1.5],[7.2,-1.5]]},
+    {name:'6-7-7 3列スタッグル',pos:[[-4.5,3.0],[-2.7,3.0],[-0.9,3.0],[0.9,3.0],[2.7,3.0],[4.5,3.0],[-5.4,0.5],[-3.6,0.5],[-1.8,0.5],[0.0,0.5],[1.8,0.5],[3.6,0.5],[5.4,0.5],[-5.4,-2.0],[-3.6,-2.0],[-1.8,-2.0],[0.0,-2.0],[1.8,-2.0],[3.6,-2.0],[5.4,-2.0]]},
+    {name:'7-7-6 前多3列スタッグル',pos:[[-5.4,3.0],[-3.6,3.0],[-1.8,3.0],[0.0,3.0],[1.8,3.0],[3.6,3.0],[5.4,3.0],[-5.4,0.5],[-3.6,0.5],[-1.8,0.5],[0.0,0.5],[1.8,0.5],[3.6,0.5],[5.4,0.5],[-4.5,-2.0],[-2.7,-2.0],[-0.9,-2.0],[0.9,-2.0],[2.7,-2.0],[4.5,-2.0]]},
+    {name:'5-5-5-5 4列スタッグル',pos:[[-3.6,4.0],[-1.8,4.0],[0.0,4.0],[1.8,4.0],[3.6,4.0],[-3.6,1.5],[-1.8,1.5],[0.0,1.5],[1.8,1.5],[3.6,1.5],[-3.6,-1.0],[-1.8,-1.0],[0.0,-1.0],[1.8,-1.0],[3.6,-1.0],[-3.6,-3.5],[-1.8,-3.5],[0.0,-3.5],[1.8,-3.5],[3.6,-3.5]]},
+  ],
+};
+
+
+function showFormations(n){
+  const list=document.getElementById('formation-list');
+  const btns=document.getElementById('formation-btns');
+  btns.innerHTML='';
+  const forms=FORMATIONS[n];
+  if(!forms){showMode(`⚠ ${n}人のフォーメーションはありません`);list.style.display='none';return;}
+  const title=document.createElement('div');
+  title.style.cssText='font-size:10px;color:#7777aa;padding:4px 0 3px;font-weight:700';
+  title.textContent=`${n}人 — パターンを選択：`;
+  btns.appendChild(title);
+  forms.forEach((f,i)=>{
+    const btn=document.createElement('button');
+    btn.className='pb';
+    btn.style.cssText='width:100%;text-align:left;font-size:11px;padding:5px 8px;display:flex;align-items:center;gap:8px;margin-bottom:2px';
+    btn.innerHTML=`<span style="color:#4466ff;font-weight:800;min-width:16px">${i+1}</span><span>${f.name}</span>`;
+    btn.onclick=()=>applyFormation(n,f);
+    btns.appendChild(btn);
+  });
+  list.style.display='block';
+}
+
+// ── 最近傍マッチング：前の立ち位置から一番近いポジションに割り当て ──
+function nearestMatch(dancers, positions){
+  // 各ダンサーの現在位置を取得
+  const cur = dancers.map(d=>({d, x:interpPos(d,ST.t).x, z:interpPos(d,ST.t).z}));
+  const avail = positions.map((p,i)=>({i, x:p[0], z:p[1]}));
+  const result = new Array(positions.length).fill(null);
+  const usedD = new Set();
+
+  // greedy最近傍マッチング
+  avail.forEach(pos=>{
+    let best=null, bestDist=Infinity;
+    cur.forEach((c,ci)=>{
+      if(usedD.has(ci)) return;
+      const dist=Math.hypot(c.x-pos.x, c.z-pos.z);
+      if(dist<bestDist){bestDist=dist; best=ci;}
+    });
+    if(best!==null){result[pos.i]=cur[best].d; usedD.add(best);}
+  });
+  // 余ったダンサーを残りに割り当て
+  let ri=0;
+  cur.forEach((c,ci)=>{
+    if(usedD.has(ci)) return;
+    while(ri<result.length&&result[ri]!==null) ri++;
+    if(ri<result.length) result[ri]=c.d;
+  });
+  return result;
+}
+
+function applyFormation(n,f){
+  if(!confirm(`「${f.name}」（${n}人）を t=${fmt(ST.t)} に適用しますか？\n(ダンサーが足りない場合は自動追加)\n最近傍マッチングで移動距離を最小化します`)) return;
+  const t=ST.t;
+  while(ST.dancers.length<n){const d=mkDancerData();ST.dancers.push(d);mkDancerMesh(d);}
+  renderLeft();
+
+  // 最近傍マッチングで割り当て
+  const matched = nearestMatch(ST.dancers.slice(0,n), f.pos);
+
+  f.pos.forEach((p,i)=>{
+    const d = matched[i] || ST.dancers[i];
+    if(!d) return;
+    const x=clamp(p[0],-ST.stW/2,ST.stW/2);
+    const z=clamp(p[1],-ST.stD/2,ST.stD/2);
+    const ex=d.kfs.find(k=>Math.abs(k.t-t)<0.15);
+    if(ex){ex.x=x;ex.z=z;}else{d.kfs.push({t,x,z});d.kfs.sort((a,b)=>a.t-b.t);}
+    syncDancer(d);
+  });
+  renderTL();updDash();
+  showMode(`🎭 「${f.name}」を適用 @ ${fmt(t)} — 最近傍マッチング`);
+}
+
+// ── 形状フォーメーション（人数に応じて動的生成）──
+function genCircle(n, r, cx=0, cz=0, startAngle=-Math.PI/2){
+  return Array.from({length:n},(_,i)=>{
+    const a=startAngle+(2*Math.PI/n)*i;
+    return [+(cx+r*Math.cos(a)).toFixed(2),+(cz+r*Math.sin(a)).toFixed(2)];
+  });
+}
+
+// 三角形：頂点1人が前、後ろに向かって広がる（詰まった形）
+function genTriangle(n, invert){
+  // 行のサイズを決定（1,2,3,4...の順に積み上げ）
+  const rows=[];
+  let rem=n, size=1;
+  while(rem>0){
+    const cnt=Math.min(size,rem);
+    rows.push(cnt); rem-=cnt; size++;
+  }
+  if(invert) rows.reverse(); // 逆三角：広い方が前
+
+  const sp=2.5; // スペース
+  const nRows=rows.length;
+  const pos=[];
+  rows.forEach((cnt,ri)=>{
+    // 三角: 頂点(1人)が前(z=正)、底辺が後ろ(z=負)
+    const z=invert
+      ? +(2.0-(ri*2.5)).toFixed(2)   // 逆三角：広い方が前
+      : +(-2.0+(nRows-1-ri)*2.5).toFixed(2); // 三角：1人が前（z=2.0付近）
+    for(let j=0;j<cnt;j++){
+      const x=+((j-(cnt-1)/2)*sp).toFixed(2);
+      pos.push([Math.max(-8,Math.min(8,x)), z]);
+    }
+  });
+  // 三角は頂点が前なので、pos配列の順を修正（行順に並べる）
+  return pos;
+}
+
+function showShapeFormations(){
+  const n=ST.dancers.length||8;
+  const r = Math.min(5, Math.max(2.5, n*0.4));
+  const shapes=[
+    {name:'🔺 三角（頂点1人が前）',    pos:genTriangle(n, false)},
+    {name:'🔻 逆三角（底辺が前）',      pos:genTriangle(n, true)},
+    {name:'⭕ 円形',                    pos:genCircle(n,r)},
+    {name:'⭕⭕ 二重円',               pos:[...genCircle(Math.ceil(n/2),r*0.5),...genCircle(Math.floor(n/2),r)]},
+    {name:'👈👉 上手下手2円',          pos:[...genCircle(Math.ceil(n/2),r*0.55,-r*1.0,0),...genCircle(Math.floor(n/2),r*0.55,r*1.0,0)]},
+    {name:'⬅⭕➡ 3円（上手・中・下手）',pos:[...genCircle(Math.round(n/3),r*0.45,-r*1.1,0),...genCircle(Math.round(n/3),r*0.45,0,0),...genCircle(n-2*Math.round(n/3),r*0.45,r*1.1,0)]},
+  ];
+  const list=document.getElementById('formation-list');
+  const btns=document.getElementById('formation-btns');
+  btns.innerHTML='';
+  const title=document.createElement('div');
+  title.style.cssText='font-size:10px;color:#7777aa;padding:4px 0 3px;font-weight:700';
+  title.textContent=`${n}人 — 形状パターン（最近傍マッチング）：`;
+  btns.appendChild(title);
+  shapes.forEach((f,i)=>{
+    const btn=document.createElement('button');
+    btn.className='pb';
+    btn.style.cssText='width:100%;text-align:left;font-size:11px;padding:5px 8px;display:flex;align-items:center;gap:8px;margin-bottom:2px';
+    btn.innerHTML=`<span style="color:#4466ff;font-weight:800;min-width:16px">${i+1}</span><span>${f.name}</span><span style="margin-left:auto;font-size:9px;color:#33335a">${f.pos.length}人</span>`;
+    btn.onclick=()=>applyFormation(f.pos.length,f);
+    btns.appendChild(btn);
+  });
+  list.style.display='block';
+}
+
 function exportKFReport(){
   const proj=document.getElementById('projname').value||'プロジェクト';
   const work=document.getElementById('workname').value||'作品';
