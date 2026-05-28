@@ -266,6 +266,11 @@ input[type=color].ri{padding:1px;height:22px;cursor:pointer}
     <span class="ph-b" onclick="addDancer()">＋</span>
     <span class="ph-b del" onclick="removeSel()">－</span>
   </div>
+  <div style="display:flex;gap:3px;padding:2px 4px">
+    <button class="pb" onclick="addDancer()" style="flex:1">＋</button>
+    <button class="pb" onclick="removeSel()" style="flex:1">－</button>
+    <button class="pb" onclick="selectAllDancers()" style="flex:2;font-size:9px;color:#ffaa33;border-color:#443300" title="全員選択（Shiftクリックで複数選択）">全員選択</button>
+  </div>
   <div id="dancer-list"></div>
   <div class="ph" style="margin-top:auto">
     <span class="ph-l">🎭 袖（待機スペース）</span>
@@ -586,7 +591,7 @@ input[type=color].ri{padding:1px;height:22px;cursor:pointer}
   </div>
 
   <!-- ホリゾント -->
-  <div class="ph"><span class="ph-l">🎨 ホリゾント背景色</span></div>
+  <div class="ph"><span class="ph-l">🎨 ホリゾント背景色</span><button class="ltb" onclick="saveHorzKF()" style="font-size:9px;padding:2px 6px;color:#ffaa33;border-color:#443300" title="現在のホリゾント設定をKFに記録">💾 KF記録</button></div>
   <div class="rs">
     <!-- 地色 -->
     <div class="irow">
@@ -630,6 +635,11 @@ input[type=color].ri{padding:1px;height:22px;cursor:pointer}
 
   <div class="ph"><span class="ph-l">🎭 フォーメーション</span></div>
   <div class="rs">
+    <!-- 一時退場ボタン -->
+    <div style="display:flex;gap:3px;margin-bottom:5px">
+      <button class="pb" onclick="exitToWings()" style="flex:1;color:#ffaa33;border-color:#443300;font-size:10px" title="各ダンサーを最寄りの袖に移動（現在時刻にKF追加）">🚪 袖に退場</button>
+      <button class="pb" onclick="exitToBack()"  style="flex:1;color:#aaaaff;border-color:#223366;font-size:10px" title="全員を後方に均等配置（現在時刻にKF追加）">⬆ 後方待機</button>
+    </div>
     <div style="display:flex;gap:3px;flex-wrap:wrap;margin-bottom:4px">
       <span style="font-size:9px;color:#33335a;width:100%;padding:2px 0">人数を選択：</span>
       <button class="pb" onclick="showFormations(7)"  style="flex:1;font-size:11px">7</button>
@@ -727,10 +737,12 @@ let ST = {
   dancers:[],
   susLights:[],
   t:0, dur:180, playing:false, selId:null,
+  selIds:[], // 複数選択
   stW:18, stD:10, stH:0.4, stMat:'concrete',
   susR:5, susC:7,
   showKen:true, showWing:false,
   moveMode:false, selWork:null,
+  horzKFs:[{t:0, color:'#111122', upperOn:false, upperColor:'#0000ff', upperInt:60, lowerOn:false, lowerColor:'#ff4400', lowerInt:60}],
 };
 
 // ═══════════════════════════════════════════════════
@@ -1094,6 +1106,50 @@ function buildHorzLights(W,D,H3,horzH){
   horzLights={upper:null,lower:null,utgt:null,ltgt:null};
 }
 
+// ── ホリゾントKF ──
+function getHorzAt(t){
+  const kfs=[...ST.horzKFs].sort((a,b)=>a.t-b.t);
+  let h=kfs[0];
+  for(const k of kfs){ if(k.t<=t) h=k; }
+  return h;
+}
+
+function saveHorzKF(){
+  const t=Math.round(ST.t*10)/10;
+  const state={
+    t,
+    color: ST.horzColor||'#111122',
+    upperOn: !!ST.horzUpperOn,
+    upperColor: ST.horzUpperColor||'#0000ff',
+    upperInt: ST.horzUpperInt||60,
+    lowerOn: !!ST.horzLowerOn,
+    lowerColor: ST.horzLowerColor||'#ff4400',
+    lowerInt: ST.horzLowerInt||60,
+  };
+  const ex=ST.horzKFs.find(k=>Math.abs(k.t-t)<0.15);
+  if(ex){ Object.assign(ex,state); }
+  else{ ST.horzKFs.push(state); ST.horzKFs.sort((a,b)=>a.t-b.t); }
+  renderTL();
+  showMode(`🎨 ホリゾントKF記録 @ ${fmt(t)}`);
+}
+
+function applyHorzKF(t){
+  const h=getHorzAt(t);
+  ST.horzColor=h.color; ST.horzUpperOn=h.upperOn; ST.horzUpperColor=h.upperColor;
+  ST.horzUpperInt=h.upperInt; ST.horzLowerOn=h.lowerOn; ST.horzLowerColor=h.lowerColor;
+  ST.horzLowerInt=h.lowerInt;
+  // UIに反映
+  const el=id=>document.getElementById(id);
+  if(el('horz-col')) el('horz-col').value=h.color;
+  if(el('horz-up-col')) el('horz-up-col').value=h.upperColor;
+  if(el('horz-lo-col')) el('horz-lo-col').value=h.lowerColor;
+  if(el('horz-up-tog')){ el('horz-up-tog').classList.toggle('on',h.upperOn); el('horz-up-tog').textContent=h.upperOn?'ON':'OFF'; }
+  if(el('horz-lo-tog')){ el('horz-lo-tog').classList.toggle('on',h.lowerOn); el('horz-lo-tog').textContent=h.lowerOn?'ON':'OFF'; }
+  if(el('horz-up-int')){ el('horz-up-int').value=h.upperInt; el('horz-up-intv').textContent=h.upperInt+'%'; }
+  if(el('horz-lo-int')){ el('horz-lo-int').value=h.lowerInt; el('horz-lo-intv').textContent=h.lowerInt+'%'; }
+  syncHorz();
+}
+
 function syncHorz(){
   const hm=ST._horzMesh; if(!hm)return;
   const geo=hm.geometry;
@@ -1232,10 +1288,16 @@ function toggleStrobe(){
   _strobeOn = !_strobeOn;
   const btn = document.getElementById('strobe-btn');
   if(_strobeOn){
+    // 現在の各サスのintensityを記録してからストロボ開始
+    ST.susLights.forEach(l=>{
+      const m=susMeshes[l.id];
+      _strobeBaseIntensity[l.id] = m ? m.spot.intensity : 0;
+    });
     btn.textContent = '⚡ 停止';
     btn.style.color = '#ffff00';
     btn.style.background = '#1a1a00';
     btn.style.borderColor = '#888800';
+    btn.style.animation = 'pulse 1s infinite';
     _runStrobe();
     showMode('⚡ ストロボ ON');
   } else {
@@ -1243,8 +1305,8 @@ function toggleStrobe(){
     btn.style.color = '';
     btn.style.background = '';
     btn.style.borderColor = '';
+    btn.style.animation = '';
     if(_strobeTimer){ clearTimeout(_strobeTimer); _strobeTimer=null; }
-    // ストロボ終了時に現在のKF状態に戻す
     ST.susLights.forEach(l=>syncSusMesh(l));
     showMode('⚡ ストロボ OFF');
   }
@@ -1253,24 +1315,28 @@ function toggleStrobe(){
 function _runStrobe(){
   if(!_strobeOn) return;
   const hz = parseInt(document.getElementById('strobe-hz').value) || 8;
-  const interval = 1000 / (hz * 2); // ON+OFFで1周期
+  const interval = 1000 / (hz * 2);
   _strobePhase = !_strobePhase;
 
   ST.susLights.forEach(l=>{
     const m = susMeshes[l.id]; if(!m) return;
-    const isOn = getOnAt(l.kfs, ST.t);
-    if(!isOn) return; // 消灯中のサスはストロボしない
-    const c = new THREE.Color(document.getElementById('susCol').value || '#ffbb44');
+    // KF状態ではなく実際のメッシュ状態で「ONかどうか」を判定
+    const wasOn = _strobeBaseIntensity[l.id] > 0.01;
+    if(!wasOn) return;
     m.g.visible = _strobePhase;
-    m.spot.intensity = _strobePhase ? 2.2 : 0;
-    m.cone.material.opacity = _strobePhase ? 0.08 : 0;
-    m.fc.material.opacity = _strobePhase ? 0.2 : 0;
+    m.spot.intensity = _strobePhase ? _strobeBaseIntensity[l.id] : 0;
+    if(m.cone) m.cone.material.opacity = _strobePhase ? 0.08 : 0;
+    if(m.fc)   m.fc.material.opacity   = _strobePhase ? 0.2  : 0;
   });
 
   _strobeTimer = setTimeout(_runStrobe, interval);
 }
 
+// ストロボON時に現在のintensityを記録
+const _strobeBaseIntensity = {};
+
 function syncSusMesh(l){
+  if(_strobeOn) return; // ストロボ中はスキップ（ストロボが制御する）
   const m=susMeshes[l.id]; if(!m)return;
   // 停止中はKF状態を直接反映、再生中だけフェードを使う
   const level = ST.playing
@@ -1846,23 +1912,63 @@ function toggleVis(id){
 }
 
 // KEY FIX: selectDancer does NOT call renderLeft() — only updates CSS
-function selectDancer(id){
-  ST.selId=id;ST.moveMode=false;
+function selectDancer(id, addToSel=false){
+  if(addToSel){
+    // Shiftクリック：追加/解除
+    if(ST.selIds.includes(id)){
+      ST.selIds=ST.selIds.filter(x=>x!==id);
+      if(ST.selId===id) ST.selId=ST.selIds[ST.selIds.length-1]||null;
+    } else {
+      ST.selIds.push(id); ST.selId=id;
+    }
+  } else {
+    ST.selId=id; ST.selIds=[id];
+  }
+  ST.moveMode=false;
   document.getElementById('movetip').style.display='none';
   document.querySelectorAll('.di').forEach(el=>{
-    el.classList.toggle('sel',el.dataset.did==id);
+    el.classList.toggle('sel', ST.selIds.includes(+el.dataset.did||el.dataset.did==ST.selId));
   });
   ST.dancers.forEach(syncDancer);
   renderProps();renderTL();updDash();
 }
+
+function selectAllDancers(){
+  ST.selIds=ST.dancers.map(d=>d.id);
+  ST.selId=ST.selIds[0]||null;
+  document.querySelectorAll('.di').forEach(el=>el.classList.add('sel'));
+  ST.dancers.forEach(syncDancer);
+  renderProps();renderTL();updDash();
+  showMode(`全${ST.selIds.length}人を選択`);
+}
+
 function enterMoveMode(){
   if(!ST.selId)return;
   ST.moveMode=true;
   document.getElementById('movetip').style.display='block';
 }
 function placeDancer(x,z){
+  // 複数選択中は全員を相対移動
+  if(ST.selIds.length>1){
+    // メインダンサーの現在位置を基準にオフセット計算
+    const main=ST.dancers.find(d=>d.id===ST.selId); if(!main)return;
+    const mp=interpPos(main,ST.t);
+    const dx=x-mp.x, dz=z-mp.z;
+    ST.selIds.forEach(id=>{
+      const d=ST.dancers.find(dd=>dd.id===id); if(!d)return;
+      const p=interpPos(d,ST.t);
+      const nx=clamp(p.x+dx,-ST.stW/2,ST.stW/2);
+      const nz=clamp(p.z+dz,-ST.stD/2,ST.stD/2);
+      let kf=d.kfs.find(k=>Math.abs(k.t-ST.t)<0.12);
+      if(kf){kf.x=nx;kf.z=nz;}else{d.kfs.push({t:ST.t,x:nx,z:nz});d.kfs.sort((a,b)=>a.t-b.t);}
+      syncDancer(d);
+    });
+    ST.moveMode=false;
+    document.getElementById('movetip').style.display='none';
+    renderTL();renderProps();updDash();
+    return;
+  }
   const d=ST.dancers.find(d=>d.id===ST.selId);if(!d)return;
-  // Allow wing area placement
   const maxX=ST.showWing?ST.stW/2+WING_W:ST.stW/2;
   x=clamp(x,-maxX,maxX);z=clamp(z,-ST.stD/2,ST.stD/2);
   let kf=d.kfs.find(k=>Math.abs(k.t-ST.t)<0.12);
@@ -1870,7 +1976,6 @@ function placeDancer(x,z){
   ST.moveMode=false;
   document.getElementById('movetip').style.display='none';
   syncDancer(d);renderTL();renderProps();updDash();
-  // Update wing badge without full re-render
   const badge=document.querySelector(`.di[data-did="${d.id}"] .wing-badge`);
   if(badge){const inW=Math.abs(x)>ST.stW/2;badge.classList.toggle('in-wing',inW);badge.textContent=inW?'袖':'舞';}
 }
@@ -1889,12 +1994,11 @@ function renderLeft(){
   const el=document.getElementById('dancer-list');el.innerHTML='';
   ST.dancers.forEach(d=>{
     const row=document.createElement('div');
-    row.className='di'+(d.id===ST.selId?' sel':'');
+    row.className='di'+(ST.selIds.includes(d.id)?' sel':'');
     row.dataset.did=d.id;
     row.onclick=(e)=>{
-      // only select if clicking row background (not child input)
       if(e.target===row||e.target.classList.contains('dvis')||e.target.classList.contains('wing-badge'))
-        selectDancer(d.id);
+        selectDancer(d.id, e.shiftKey||e.metaKey||e.ctrlKey);
     };
     // Color swatch
     const sw=document.createElement('div');
@@ -2192,6 +2296,23 @@ function renderTL(){
     m.ondblclick=e=>{e.stopPropagation();delSusKF(l,kf.t);};
     kfLt.appendChild(m);
   }));
+
+  // ホリゾントKFマーカー（緑色の菱形）
+  const horzCol=isLight?'#006633':'#33ff88';
+  ST.horzKFs.forEach(kf=>{
+    if(kf.t===0) return; // t=0はデフォルトなので表示しない
+    const m=document.createElement('div');
+    m.dataset.kfm='1';
+    m.style.cssText=`position:absolute;top:25%;left:${t2p(kf.t)}%;width:9px;height:9px;transform:translate(-50%,-50%) rotate(45deg);background:${horzCol};border:1px solid rgba(255,255,255,.5);cursor:pointer;pointer-events:all;z-index:3`;
+    m.title=`🎨 ホリゾントKF @ ${fmt(kf.t)}\nダブルクリック→削除`;
+    m.onclick=e=>{e.stopPropagation();seekTo(kf.t);};
+    m.ondblclick=e=>{
+      e.stopPropagation();
+      const i=ST.horzKFs.indexOf(kf);
+      if(i>0){ST.horzKFs.splice(i,1);renderTL();showMode(`🎨 ホリゾントKF削除 @ ${fmt(kf.t)}`);}
+    };
+    kfLt.appendChild(m);
+  });
 }
 
 function seekTo(t){
@@ -2224,13 +2345,15 @@ function seekTo(t){
     }
   }
   renderTL();syncAll();renderProps();updDash();updSusUI();
+  // ホリゾントKFを同期
+  applyHorzKF(ST.t);
 }
-// 📌 固定KF：現在の立ち位置のままKFを追加（動かない固定点を作る）
 // 使い方: 「ここまで動かない」という時刻でこのボタンを押す
 function addHoldKF(){
   const d=ST.dancers.find(d=>d.id===ST.selId);
   if(!d){ showMode('⚠ ダンサーを選択してください'); return; }
   if(ST.playing) togglePlay();
+  pushUndo();
   const t=Math.round(ST.t*10)/10;
   seekTo(t);
   const existing=d.kfs.find(k=>Math.abs(k.t-t)<0.3);
@@ -2246,11 +2369,8 @@ function addHoldKF(){
 function addKF(){
   const d=ST.dancers.find(d=>d.id===ST.selId);
   if(!d){ showMode('⚠ ダンサーを選択してください'); return; }
-
-  // 再生中は一時停止してから追加（時刻ズレ防止）
   if(ST.playing) togglePlay();
-
-  // 時刻を0.1秒単位に丸める（重複KFの原因を防ぐ）
+  pushUndo();
   const t = Math.round(ST.t * 10) / 10;
   seekTo(t); // 丸めた時刻に合わせる
 
@@ -2301,6 +2421,9 @@ function delKF(){
 document.addEventListener('keydown', e=>{
   // 名前入力中はスキップ
   if(e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA') return;
+
+  // Ctrl+Z / Cmd+Z でUNDO
+  if((e.ctrlKey||e.metaKey)&&e.key==='z'){ e.preventDefault(); undo(); return; }
 
   switch(e.key){
     case 'Delete':
@@ -2704,7 +2827,17 @@ function renderWorkList(){
   });
 }
 function delWD(proj,work){const ps=getPS();if(ps[proj])delete ps[proj][work];setPS(ps);if(ST.selWork?.proj===proj&&ST.selWork?.work===work)ST.selWork=null;renderWorkList();}
-function getWD(){return{dancers:JSON.parse(JSON.stringify(ST.dancers)),susLights:JSON.parse(JSON.stringify(ST.susLights)),lightState:JSON.parse(JSON.stringify(LS)),dur:ST.dur,stW:ST.stW,stD:ST.stD,stH:ST.stH,stMat:ST.stMat,susR:ST.susR,susC:ST.susC};}
+function getWD(){
+  return {
+    dancers: JSON.parse(JSON.stringify(ST.dancers)),
+    susLights: JSON.parse(JSON.stringify(ST.susLights)),
+    lightState: JSON.parse(JSON.stringify(LS)),
+    horzKFs: JSON.parse(JSON.stringify(ST.horzKFs)),
+    dur: ST.dur,
+    stW: ST.stW, stD: ST.stD, stH: ST.stH, stMat: ST.stMat,
+    susR: ST.susR, susC: ST.susC,
+  };
+}
 function applyWD(data){
   // 1. ダンサー完全クリア
   ST.dancers.forEach(d=>rmDancerMesh(d.id)); ST.dancers=[];
@@ -2765,9 +2898,16 @@ function applyWD(data){
 
   // 9. t=0で同期
   ST.selId=null; ST.t=0;
+  // ホリゾントKF復元
+  if(data.horzKFs&&data.horzKFs.length>0){
+    ST.horzKFs=JSON.parse(JSON.stringify(data.horzKFs));
+  } else {
+    ST.horzKFs=[{t:0,color:'#111122',upperOn:false,upperColor:'#0000ff',upperInt:60,lowerOn:false,lowerColor:'#ff4400',lowerInt:60}];
+  }
   syncAllLights();
   ST.dancers.forEach(syncDancer);
   ST.susLights.forEach(syncSusMesh); updSusUI();
+  applyHorzKF(0);
 
   // 10. UI更新
   renderLeft(); renderProps(); renderWorkList(); renderTL(); updDash();
@@ -2974,6 +3114,7 @@ function loop(ts){
         LS[id].fadeIn||LS[id].fade||0, LS[id].fadeOut||LS[id].fade||0) > 0.01;
     });
     syncAll();
+    applyHorzKF(ST.t); // 再生中もホリゾントKFに追従
     if(ts-_lts>120){ renderProps(); updDash(); }
   }
   _lts=ts;
@@ -3171,6 +3312,69 @@ h1{font-size:16px;font-weight:800;color:#1133aa;margin-bottom:3px}
 // ════════════════════════════════
 // フォーメーションプリセット
 // ════════════════════════════════
+// ── 一時退場（袖・後方）──
+
+// 各ダンサーを最寄りの袖に移動（KF追加）
+function exitToWings(){
+  if(!ST.dancers.length){showMode('⚠ ダンサーがいません');return;}
+  pushUndo();
+  const t=ST.t;
+  const wingX=ST.stW/2+2.0; // ステージ端から2m外
+
+  ST.dancers.forEach(d=>{
+    const p=interpPos(d,t);
+    // 現在地にホールドKFを打ってから退場（急に動かないように）
+    const holdT=Math.max(0,Math.round((t-0.1)*10)/10);
+    if(holdT<t){
+      const exH=d.kfs.find(k=>Math.abs(k.t-holdT)<0.1);
+      if(!exH){d.kfs.push({t:holdT,x:p.x,z:p.z});d.kfs.sort((a,b)=>a.t-b.t);}
+    }
+    // 最寄りの袖（X>0なら上手、X<=0なら下手）
+    const exitX = p.x>=0 ? wingX : -wingX;
+    const ex=d.kfs.find(k=>Math.abs(k.t-t)<0.1);
+    if(ex){ex.x=exitX;ex.z=p.z;}
+    else{d.kfs.push({t,x:exitX,z:p.z});d.kfs.sort((a,b)=>a.t-b.t);}
+    syncDancer(d);
+  });
+  renderTL();renderLeft();updDash();
+  showMode(`🚪 全員袖に退場 @ ${fmt(t)}`);
+}
+
+// 全員を後方に均等に並べる（KF追加）
+function exitToBack(){
+  if(!ST.dancers.length){showMode('⚠ ダンサーがいません');return;}
+  pushUndo();
+  const t=ST.t;
+  const n=ST.dancers.length;
+  const backZ=-(ST.stD/2-0.5); // 奥端から0.5m手前
+  const sp=Math.min(2.5, ST.stW/(n+1));
+
+  ST.dancers.forEach((d,i)=>{
+    const p=interpPos(d,t);
+    const holdT=Math.max(0,Math.round((t-0.1)*10)/10);
+    if(holdT<t){
+      const exH=d.kfs.find(k=>Math.abs(k.t-holdT)<0.1);
+      if(!exH){d.kfs.push({t:holdT,x:p.x,z:p.z});d.kfs.sort((a,b)=>a.t-b.t);}
+    }
+    const exitX=((i-(n-1)/2)*sp);
+    const ex=d.kfs.find(k=>Math.abs(k.t-t)<0.1);
+    if(ex){ex.x=exitX;ex.z=backZ;}
+    else{d.kfs.push({t,x:exitX,z:backZ});d.kfs.sort((a,b)=>a.t-b.t);}
+    syncDancer(d);
+  });
+  renderTL();renderLeft();updDash();
+  showMode(`⬆ 全員後方待機 @ ${fmt(t)}`);
+}
+const _undoHistory=[];
+const UNDO_MAX=30;
+function pushUndo(){ _undoHistory.push(JSON.stringify(getWD())); if(_undoHistory.length>UNDO_MAX)_undoHistory.shift(); }
+function undo(){
+  if(_undoHistory.length===0){showMode('⚠ これ以上戻れません');return;}
+  const prev=JSON.parse(_undoHistory.pop());
+  applyWD(prev);
+  showMode(`↩ UNDO — あと${_undoHistory.length}回戻れます`);
+}
+
 const FORMATIONS={
   7:[
     {name:'4-3 前多スタッグル',pos:[[-3.75,1.5],[-1.25,1.5],[1.25,1.5],[3.75,1.5],[-2.5,-1.5],[0.0,-1.5],[2.5,-1.5]]},
@@ -3507,6 +3711,8 @@ initThree();
 buildStage();
 buildAllLights();
 rebuildSus();
+// ホリゾント初期化
+setTimeout(()=>applyHorzKF(0), 200);
 
 // Build color presets
 buildPresets('bspcols',h=>{LS.backSus.color=h;document.getElementById('bs-col').value=h;syncLight('backSus');});
