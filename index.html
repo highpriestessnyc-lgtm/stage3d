@@ -246,7 +246,7 @@ input[type=color].ri{padding:1px;height:22px;cursor:pointer}
 <!-- ══ LEFT ══ -->
 <div id="left">
   <div class="ph">
-    <span class="ph-l">📁 プロジェクト</span>
+    <span class="ph-l" data-i18n="">📁 プロジェクト</span>
     <span class="ph-b" onclick="toggleStageBright()" id="brightbtn" title="ステージを明るく（作業用）">💡 作業灯</span>
     <span class="ph-b" onclick="toggleLightMode()" id="modetog" title="パネルを明るく">☀ 明</span>
     <span class="ph-b" onclick="newStage()" style="color:#ff4444" title="新規ステージ（全データ初期化）">🆕 新規</span>
@@ -256,24 +256,24 @@ input[type=color].ri{padding:1px;height:22px;cursor:pointer}
     <input class="pi" id="workname" placeholder="作品名">
     <div id="work-list"></div>
     <div class="pbtns">
-      <button class="pb" onclick="askSave()">保存</button>
-      <button class="pb" onclick="importJ()">読込</button>
-      <button class="pb red" onclick="delWork()">削除</button>
+      <button class="pb" onclick="askSave()" data-i18n="">保存</button>
+      <button class="pb" onclick="importJ()" data-i18n="">読込</button>
+      <button class="pb red" onclick="delWork()" data-i18n="">削除</button>
     </div>
   </div>
   <div class="ph">
-    <span class="ph-l">🧑 ダンサー</span>
+    <span class="ph-l" data-i18n="">🧑 ダンサー</span>
     <span class="ph-b" onclick="addDancer()">＋</span>
     <span class="ph-b del" onclick="removeSel()">－</span>
   </div>
   <div style="display:flex;gap:3px;padding:2px 4px">
     <button class="pb" onclick="addDancer()" style="flex:1">＋</button>
     <button class="pb" onclick="removeSel()" style="flex:1">－</button>
-    <button class="pb" onclick="selectAllDancers()" style="flex:2;font-size:9px;color:#ffaa33;border-color:#443300" title="全員選択（Shiftクリックで複数選択）">全員選択</button>
+    <button class="pb" onclick="selectAllDancers()" style="flex:2;font-size:9px;color:#ffaa33;border-color:#443300" title="全員選択（Shiftクリックで複数選択）" data-i18n="">全員選択</button>
   </div>
   <div id="dancer-list"></div>
   <div class="ph" style="margin-top:auto">
-    <span class="ph-l">🎭 袖（待機スペース）</span>
+    <span class="ph-l" data-i18n="">🎭 袖（待機スペース）</span>
     <span class="ph-b" id="wingtog" onclick="toggleWing()">表示</span>
   </div>
 </div>
@@ -286,14 +286,17 @@ input[type=color].ri{padding:1px;height:22px;cursor:pointer}
     <div id="touch-layer"></div>
     <div id="labels"></div>
     <div id="modebar">人をドラッグして移動　空きエリアドラッグで回転　ピンチでズーム</div>
+    <!-- マーキー選択ボックス -->
+    <div id="marquee" style="position:absolute;border:2px solid #4466ff;background:rgba(68,102,255,.12);pointer-events:none;display:none;z-index:20"></div>
     <div id="camrow">
-      <button class="cbtn" onclick="setView('front')" ontouchend="setView('front');event.preventDefault();event.stopPropagation()">正面</button>
-      <button class="cbtn" onclick="setView('top')" ontouchend="setView('top');event.preventDefault();event.stopPropagation()">真上</button>
-      <button class="cbtn" onclick="setView('side')" ontouchend="setView('side');event.preventDefault();event.stopPropagation()">側面</button>
+      <button class="cbtn" onclick="setView('front')" ontouchend="setView('front');event.preventDefault();event.stopPropagation()" data-i18n="">正面</button>
+      <button class="cbtn" onclick="setView('top')" ontouchend="setView('top');event.preventDefault();event.stopPropagation()" data-i18n="">真上</button>
+      <button class="cbtn" onclick="setView('side')" ontouchend="setView('side');event.preventDefault();event.stopPropagation()" data-i18n="">側面</button>
       <button class="cbtn" onclick="zoomStep(-1)" ontouchend="zoomStep(-1);event.preventDefault();event.stopPropagation()" style="font-size:15px;padding:3px 8px" title="ズームイン">＋</button>
       <button class="cbtn" onclick="zoomStep(1)" ontouchend="zoomStep(1);event.preventDefault();event.stopPropagation()" style="font-size:15px;padding:3px 8px" title="ズームアウト">－</button>
-      <button class="cbtn" id="lockbtn" onclick="toggleLock()" ontouchend="toggleLock();event.preventDefault();event.stopPropagation()" style="border-color:#553311;color:#aa6622">🔓 固定</button>
+      <button class="cbtn" id="lockbtn" onclick="toggleLock()" ontouchend="toggleLock();event.preventDefault();event.stopPropagation()" style="border-color:#553311;color:#aa6622" data-i18n="">🔓 固定</button>
       <button class="cbtn" onclick="toggleFullscreen()" id="fsbtn" title="全画面">⛶</button>
+      <button class="cbtn" id="lang-btn" onclick="setLang(_lang==='JP'?'EN':'JP')" style="color:#33cc88;border-color:#104430;min-width:44px">🌐 EN</button>
     </div>
     <div id="movetip">ステージ or 袖をタップして移動</div>
     <div id="mobbtn">
@@ -317,7 +320,7 @@ input[type=color].ri{padding:1px;height:22px;cursor:pointer}
     <!-- 共通コントロール -->
     <div id="tlrow">
       <span id="timedsp">0:00.0</span>
-      <button id="plybtn" onclick="togglePlay()" ontouchend="togglePlay();event.preventDefault()">▶ 再生</button>
+      <button id="plybtn" onclick="togglePlay()" ontouchend="togglePlay();event.preventDefault()" data-i18n="">▶ 再生</button>
       <div class="tc">尺<input type="number" id="dur" value="180" min="10" max="600" onchange="ST.dur=+this.value||180;renderTL()">秒</div>
       <div class="tc" style="gap:3px">
         <span style="font-size:9px;color:#33335a">🔍</span>
@@ -326,19 +329,19 @@ input[type=color].ri{padding:1px;height:22px;cursor:pointer}
           title="タイムラインズーム">
         <span style="font-size:9px;color:#33335a" id="tlzoomv">×1</span>
       </div>
-      <button class="tlbtn" onclick="confirmResetKF()" style="margin-left:auto;color:#ff4444;border-color:#661111" title="全KFをリセット">⚠ KFリセット</button>
+      <button class="tlbtn" onclick="confirmResetKF()" style="margin-left:auto;color:#ff4444;border-color:#661111" title="全KFをリセット" data-i18n="">⚠ KFリセット</button>
     </div>
     <div id="ruler"></div>
 
     <!-- 上段：ダンサー立ち位置KF -->
     <div style="display:flex;align-items:center;gap:4px;flex-wrap:wrap">
       <span style="font-size:9px;color:#7777aa;min-width:28px;font-weight:700;letter-spacing:.5px">位置</span>
-      <button class="tlbtn kf" onclick="addKF()">◆ KF追加</button>
-      <button class="tlbtn" onclick="addHoldKF()" style="color:#ffcc44;border-color:#443300" title="現在の立ち位置のままKFを追加（動かない固定点）">📌 固定</button>
-      <button class="tlbtn" onclick="delKF()">削除</button>
-      <button class="tlbtn" onclick="copyKFSnapshot()" style="color:#33cc88;border-color:#104430">⧉ コピー</button>
-      <button class="tlbtn" id="kfpastebtn" onclick="pasteKFSnapshot()" style="color:#3388ff;border-color:#102240;opacity:0.4;pointer-events:none">⧉ 貼付</button>
-      <button class="tlbtn" onclick="resetAllKF()" style="color:#ff4444;border-color:#441111;margin-left:auto" title="立ち位置KFをリセット">🗑 位置リセット</button>
+      <button class="tlbtn kf" onclick="addKF()" data-i18n="">◆ KF追加</button>
+      <button class="tlbtn" onclick="addHoldKF()" style="color:#ffcc44;border-color:#443300" title="現在の立ち位置のままKFを追加（動かない固定点）" data-i18n="">📌 固定</button>
+      <button class="tlbtn" onclick="delKF()" data-i18n="">削除</button>
+      <button class="tlbtn" onclick="copyKFSnapshot()" style="color:#33cc88;border-color:#104430" data-i18n="">⧉ コピー</button>
+      <button class="tlbtn" id="kfpastebtn" onclick="pasteKFSnapshot()" style="color:#3388ff;border-color:#102240;opacity:0.4;pointer-events:none" data-i18n="">⧉ 貼付</button>
+      <button class="tlbtn" onclick="resetAllKF()" style="color:#ff4444;border-color:#441111;margin-left:auto" title="立ち位置KFをリセット" data-i18n="">🗑 位置リセット</button>
     </div>
     <div id="scrub-pos" style="position:relative;height:42px;background:#03030a;border:1px solid #101020;border-radius:4px;cursor:crosshair;touch-action:none;flex-shrink:0">
       <div id="prog-pos" style="position:absolute;top:0;left:0;height:100%;background:#07071c;border-radius:4px;pointer-events:none"></div>
@@ -351,14 +354,14 @@ input[type=color].ri{padding:1px;height:22px;cursor:pointer}
       <span style="font-size:9px;color:#ffaa33;min-width:28px;font-weight:700;letter-spacing:.5px">照明</span>
       <button class="tlbtn" id="lrec-btn" onclick="toggleLightRec()"
         style="color:#ff4444;border-color:#661111;font-weight:700;min-width:80px;text-align:center"
-        title="ONにすると照明操作がKFとして記録される">
+        title="ONにすると照明操作がKFとして記録される" data-i18n="">
         ⚫ 記録OFF
       </button>
-      <button class="tlbtn" onclick="addLightKF()" style="color:#ffaa33;border-color:#553310">💡 今の状態を記録</button>
-      <button class="tlbtn" onclick="delLightKFAtCurrent()" style="color:#ff7733;border-color:#441a00">削除</button>
-      <button class="tlbtn" onclick="copyLightKF()" style="color:#ffcc44;border-color:#554400">💡 コピー</button>
-      <button class="tlbtn" id="lpastebtn" onclick="pasteLightKF()" style="color:#ffaa22;border-color:#553300;opacity:0.4;pointer-events:none">💡 貼付</button>
-      <button class="tlbtn" onclick="resetLightKF()" style="color:#ff6622;border-color:#441100;margin-left:auto">🗑 照明リセット</button>
+      <button class="tlbtn" onclick="addLightKF()" style="color:#ffaa33;border-color:#553310" data-i18n="">💡 今の状態を記録</button>
+      <button class="tlbtn" onclick="delLightKFAtCurrent()" style="color:#ff7733;border-color:#441a00" data-i18n="">削除</button>
+      <button class="tlbtn" onclick="copyLightKF()" style="color:#ffcc44;border-color:#554400" data-i18n="">💡 コピー</button>
+      <button class="tlbtn" id="lpastebtn" onclick="pasteLightKF()" style="color:#ffaa22;border-color:#553300;opacity:0.4;pointer-events:none" data-i18n="">💡 貼付</button>
+      <button class="tlbtn" onclick="resetLightKF()" style="color:#ff6622;border-color:#441100;margin-left:auto" data-i18n="">🗑 照明リセット</button>
     </div>
     <div id="scrub-lt" style="position:relative;height:34px;background:#030308;border:1px solid #201808;border-radius:4px;cursor:crosshair;touch-action:none;flex-shrink:0">
       <div id="kflayer-lt" style="position:absolute;inset:0;pointer-events:none"></div>
@@ -370,7 +373,7 @@ input[type=color].ri{padding:1px;height:22px;cursor:pointer}
 <div id="right">
 
   <!-- DASHBOARD -->
-  <div class="ph"><span class="ph-l">📊 状態</span></div>
+  <div class="ph"><span class="ph-l" data-i18n="">📊 状態</span></div>
   <div id="dashbox">
     <div class="dcard"><div class="dct">操作中</div><div class="dcv" id="d-name">—</div><div class="dcs" id="d-pos">未選択</div></div>
     <div class="dcard"><div class="dct">照明ON</div><div class="dcv" id="d-lights">なし</div></div>
@@ -378,7 +381,7 @@ input[type=color].ri{padding:1px;height:22px;cursor:pointer}
   </div>
 
   <!-- SUS GRID -->
-  <div class="ph"><span class="ph-l">💡 頭上サス</span></div>
+  <div class="ph"><span class="ph-l" data-i18n="">💡 頭上サス</span></div>
   <div class="rs" style="display:flex;align-items:center;gap:3px;flex-wrap:wrap">
     <span class="rl" style="margin:0">行</span>
     <input type="number" class="ri" id="sr" value="5" min="1" max="6" style="width:32px" onchange="rebuildSus()">
@@ -388,17 +391,17 @@ input[type=color].ri{padding:1px;height:22px;cursor:pointer}
   </div>
   <!-- 全ON/OFF -->
   <div style="display:flex;gap:4px;padding:4px 8px">
-    <button class="ltb" onclick="susAllOn()" style="flex:1;color:#ffcc33;border-color:#554400">⬛ 全灯ON</button>
-    <button class="ltb" onclick="susFullOut()" style="flex:1;color:#ff4422;border-color:#441100">⬛ 全灯OFF</button>
+    <button class="ltb" onclick="susAllOn()" style="flex:1;color:#ffcc33;border-color:#554400" data-i18n="">⬛ 全灯ON</button>
+    <button class="ltb" onclick="susFullOut()" style="flex:1;color:#ff4422;border-color:#441100" data-i18n="">⬛ 全灯OFF</button>
   </div>
   <!-- ラインサスパターン選択 -->
   <div class="irow" style="flex-wrap:wrap;gap:3px;padding:3px 8px 2px">
     <span style="font-size:9px;color:#33335a;width:100%;margin-bottom:2px">💡 ラインサス</span>
-    <button class="ltb on" onclick="susPat('kamite')"  style="font-size:9px;padding:2px 5px;flex:1" title="上手側（右半分）">上手</button>
-    <button class="ltb on" onclick="susPat('shimote')" style="font-size:9px;padding:2px 5px;flex:1" title="下手側（左半分）">下手</button>
-    <button class="ltb on" onclick="susPat('center')"  style="font-size:9px;padding:2px 5px;flex:1" title="センター列">中央</button>
-    <button class="ltb on" onclick="susPat('front')"   style="font-size:9px;padding:2px 5px;flex:1" title="前方行（客席側）">前</button>
-    <button class="ltb on" onclick="susPat('back')"    style="font-size:9px;padding:2px 5px;flex:1" title="後方行（バック側）">奥</button>
+    <button class="ltb on" onclick="susPat('kamite')"  style="font-size:9px;padding:2px 5px;flex:1" title="上手側（右半分）" data-i18n="">上手</button>
+    <button class="ltb on" onclick="susPat('shimote')" style="font-size:9px;padding:2px 5px;flex:1" title="下手側（左半分）" data-i18n="">下手</button>
+    <button class="ltb on" onclick="susPat('center')"  style="font-size:9px;padding:2px 5px;flex:1" title="センター列" data-i18n="">中央</button>
+    <button class="ltb on" onclick="susPat('front')"   style="font-size:9px;padding:2px 5px;flex:1" title="前方行（客席側）" data-i18n="">前</button>
+    <button class="ltb on" onclick="susPat('back')"    style="font-size:9px;padding:2px 5px;flex:1" title="後方行（バック側）" data-i18n="">奥</button>
     <button class="ltb on" onclick="susPat('diagL')"   style="font-size:9px;padding:2px 5px;flex:1" title="斜め（上手→奥）">╲</button>
     <button class="ltb on" onclick="susPat('diagR')"   style="font-size:9px;padding:2px 5px;flex:1" title="斜め（下手→奥）">╱</button>
     <button class="ltb on" onclick="susPat('checker')" style="font-size:9px;padding:2px 5px;flex:1" title="千鳥格子">⊞</button>
@@ -418,22 +421,22 @@ input[type=color].ri{padding:1px;height:22px;cursor:pointer}
   </div>
   <!-- ストロボ -->
   <div class="irow" style="padding:3px 8px 2px;gap:4px">
-    <button class="ltb" id="strobe-btn" onclick="toggleStrobe()" style="font-size:10px;min-width:60px">⚡ ストロボ</button>
+    <button class="ltb" id="strobe-btn" onclick="toggleStrobe()" style="font-size:10px;min-width:60px" data-i18n="">⚡ ストロボ</button>
     <input type="range" id="strobe-hz" min="1" max="20" step="1" value="8" style="flex:1" oninput="document.getElementById('strobe-hzv').textContent=this.value+'Hz'">
     <span class="ival" id="strobe-hzv">8Hz</span>
   </div>
   <!-- バックサスA 上手/下手 -->
-  <div class="ph" style="margin-top:2px"><span class="ph-l" style="font-size:9px">🔦 バックサス 上手/下手</span></div>
+  <div class="ph" style="margin-top:2px"><span class="ph-l" style="font-size:9px" data-i18n="">🔦 バックサス 上手/下手</span></div>
   <div style="display:flex;gap:3px;padding:3px 8px 5px;flex-wrap:wrap">
-    <button class="ltb" onclick="backSusSide('A','kamite')" style="flex:1;font-size:9px">A 上手</button>
-    <button class="ltb" onclick="backSusSide('A','shimote')" style="flex:1;font-size:9px">A 下手</button>
-    <button class="ltb" onclick="backSusSide('B','kamite')" style="flex:1;font-size:9px">B 上手</button>
-    <button class="ltb" onclick="backSusSide('B','shimote')" style="flex:1;font-size:9px">B 下手</button>
+    <button class="ltb" onclick="backSusSide('A','kamite')" style="flex:1;font-size:9px" data-i18n="">A 上手</button>
+    <button class="ltb" onclick="backSusSide('A','shimote')" style="flex:1;font-size:9px" data-i18n="">A 下手</button>
+    <button class="ltb" onclick="backSusSide('B','kamite')" style="flex:1;font-size:9px" data-i18n="">B 上手</button>
+    <button class="ltb" onclick="backSusSide('B','shimote')" style="flex:1;font-size:9px" data-i18n="">B 下手</button>
   </div>
   <div id="susgrid"></div>
 
   <!-- BACK SUS -->
-  <div class="ph"><span class="ph-l">🔦 バックサス A — パラレル</span></div>
+  <div class="ph"><span class="ph-l" data-i18n="">🔦 バックサス A — パラレル</span></div>
   <div class="rs">
     <div style="font-size:9px;color:#7777aa;margin-bottom:3px">6灯 後方天井バー → ステージ前方へ平行照射</div>
     <div class="ltgrid" style="grid-template-columns:1fr">
@@ -458,7 +461,7 @@ input[type=color].ri{padding:1px;height:22px;cursor:pointer}
       <span class="ival" id="bs-fadeoutv">0s</span>
     </div>
   </div>
-  <div class="ph"><span class="ph-l">🔦 バックサス B — クロス</span></div>
+  <div class="ph"><span class="ph-l" data-i18n="">🔦 バックサス B — クロス</span></div>
   <div class="rs">
     <div style="font-size:9px;color:#7777aa;margin-bottom:3px">6灯 X字交差 — 2色目に最適</div>
     <div class="ltgrid" style="grid-template-columns:1fr">
@@ -485,7 +488,7 @@ input[type=color].ri{padding:1px;height:22px;cursor:pointer}
   </div>
 
   <!-- BACK FOOT -->
-  <div class="ph"><span class="ph-l">💥 バックフット（目潰し）</span></div>
+  <div class="ph"><span class="ph-l" data-i18n="">💥 バックフット（目潰し）</span></div>
   <div class="rs">
     <div style="font-size:9px;color:#7777aa;margin-bottom:3px">後方床置き → 客席方向へ照射</div>
     <div class="ltgrid" style="grid-template-columns:1fr">
@@ -504,12 +507,12 @@ input[type=color].ri{padding:1px;height:22px;cursor:pointer}
   </div>
 
   <!-- FRONT (FOH) -->
-  <div class="ph"><span class="ph-l">🎯 フロント照明</span></div>
+  <div class="ph"><span class="ph-l" data-i18n="">🎯 フロント照明</span></div>
   <div class="rs">
     <div style="font-size:9px;color:#7777aa;margin-bottom:3px">客席上方からステージを照らす</div>
     <div class="ltgrid" style="grid-template-columns:1fr 1fr">
-      <button class="ltb" id="lt-fohUp" onclick="ltToggle('fohUp')">上段 OFF</button>
-      <button class="ltb" id="lt-fohLo" onclick="ltToggle('fohLo')">下段 OFF</button>
+      <button class="ltb" id="lt-fohUp" onclick="ltToggle('fohUp')" data-i18n="">上段 OFF</button>
+      <button class="ltb" id="lt-fohLo" onclick="ltToggle('fohLo')" data-i18n="">下段 OFF</button>
     </div>
     <div class="pcols" id="fohpcols"></div>
     <div class="irow">
@@ -524,17 +527,17 @@ input[type=color].ri{padding:1px;height:22px;cursor:pointer}
   </div>
 
   <!-- SS LIGHTS -->
-  <div class="ph"><span class="ph-l">🔆 SS照明（袖→ステージ）</span></div>
+  <div class="ph"><span class="ph-l" data-i18n="">🔆 SS照明（袖→ステージ）</span></div>
   <div class="rs">
     <label class="rl">一幕 — 上手（ステージから向かって右）</label>
     <div class="ltgrid" style="grid-template-columns:1fr 1fr">
-      <button class="ltb" id="lt-ss1RU" onclick="ltToggle('ss1RU')">上段 OFF</button>
-      <button class="ltb" id="lt-ss1RL" onclick="ltToggle('ss1RL')">下段 OFF</button>
+      <button class="ltb" id="lt-ss1RU" onclick="ltToggle('ss1RU')" data-i18n="">上段 OFF</button>
+      <button class="ltb" id="lt-ss1RL" onclick="ltToggle('ss1RL')" data-i18n="">下段 OFF</button>
     </div>
     <label class="rl" style="margin-top:5px">一幕 — 下手（ステージから向かって左）</label>
     <div class="ltgrid" style="grid-template-columns:1fr 1fr">
-      <button class="ltb" id="lt-ss1LU" onclick="ltToggle('ss1LU')">上段 OFF</button>
-      <button class="ltb" id="lt-ss1LL" onclick="ltToggle('ss1LL')">下段 OFF</button>
+      <button class="ltb" id="lt-ss1LU" onclick="ltToggle('ss1LU')" data-i18n="">上段 OFF</button>
+      <button class="ltb" id="lt-ss1LL" onclick="ltToggle('ss1LL')" data-i18n="">下段 OFF</button>
     </div>
     <div class="irow" style="margin-top:4px">
       <span>色</span><input type="color" id="ss1-col" value="#ffdd88" style="width:26px;height:18px;border:none;cursor:pointer;padding:0" onchange="onLColGroup(['ss1LU','ss1LL','ss1RU','ss1RL'],this.value)">
@@ -547,13 +550,13 @@ input[type=color].ri{padding:1px;height:22px;cursor:pointer}
     </div>
     <label class="rl" style="margin-top:6px">二幕 — 上手</label>
     <div class="ltgrid" style="grid-template-columns:1fr 1fr">
-      <button class="ltb" id="lt-ss2RU" onclick="ltToggle('ss2RU')">上段 OFF</button>
-      <button class="ltb" id="lt-ss2RL" onclick="ltToggle('ss2RL')">下段 OFF</button>
+      <button class="ltb" id="lt-ss2RU" onclick="ltToggle('ss2RU')" data-i18n="">上段 OFF</button>
+      <button class="ltb" id="lt-ss2RL" onclick="ltToggle('ss2RL')" data-i18n="">下段 OFF</button>
     </div>
     <label class="rl" style="margin-top:5px">二幕 — 下手</label>
     <div class="ltgrid" style="grid-template-columns:1fr 1fr">
-      <button class="ltb" id="lt-ss2LU" onclick="ltToggle('ss2LU')">上段 OFF</button>
-      <button class="ltb" id="lt-ss2LL" onclick="ltToggle('ss2LL')">下段 OFF</button>
+      <button class="ltb" id="lt-ss2LU" onclick="ltToggle('ss2LU')" data-i18n="">上段 OFF</button>
+      <button class="ltb" id="lt-ss2LL" onclick="ltToggle('ss2LL')" data-i18n="">下段 OFF</button>
     </div>
     <div class="irow" style="margin-top:4px">
       <span>色</span><input type="color" id="ss2-col" value="#fff5d0" style="width:26px;height:18px;border:none;cursor:pointer;padding:0" onchange="onLColGroup(['ss2LU','ss2LL','ss2RU','ss2RL'],this.value)">
@@ -567,7 +570,7 @@ input[type=color].ri{padding:1px;height:22px;cursor:pointer}
   </div>
 
   <!-- STAGE SETTINGS -->
-  <div class="ph"><span class="ph-l">🎬 ステージ</span></div>
+  <div class="ph"><span class="ph-l" data-i18n="">🎬 ステージ</span></div>
   <div class="rs">
     <div style="display:flex;gap:5px;align-items:flex-end">
       <div style="flex:1"><label class="rl">幅 (m)</label><input type="number" class="ri" id="sw" value="18" min="4" max="30" onchange="rebuildStage()"></div>
@@ -576,22 +579,22 @@ input[type=color].ri{padding:1px;height:22px;cursor:pointer}
     </div>
     <label class="rl" style="margin-top:5px">床材</label>
     <div class="ltgrid" style="grid-template-columns:repeat(3,1fr);margin-top:2px">
-      <button class="ltb on" id="mat-concrete" onclick="setMat('concrete')">コンクリ</button>
-      <button class="ltb" id="mat-wood" onclick="setMat('wood')">木目</button>
-      <button class="ltb" id="mat-dark" onclick="setMat('dark')">黒</button>
-      <button class="ltb" id="mat-marble" onclick="setMat('marble')">大理石</button>
-      <button class="ltb" id="mat-neon" onclick="setMat('neon')">近未来</button>
-      <button class="ltb" id="mat-custom" onclick="setMat('custom')" style="font-size:9px">カスタム</button>
+      <button class="ltb on" id="mat-concrete" onclick="setMat('concrete')" data-i18n="">コンクリ</button>
+      <button class="ltb" id="mat-wood" onclick="setMat('wood')" data-i18n="">木目</button>
+      <button class="ltb" id="mat-dark" onclick="setMat('dark')" data-i18n="">黒</button>
+      <button class="ltb" id="mat-marble" onclick="setMat('marble')" data-i18n="">大理石</button>
+      <button class="ltb" id="mat-neon" onclick="setMat('neon')" data-i18n="">近未来</button>
+      <button class="ltb" id="mat-custom" onclick="setMat('custom')" style="font-size:9px" data-i18n="">カスタム</button>
     </div>
     <input type="color" id="stageCustomCol" value="#6699aa" style="width:100%;height:22px;margin-top:3px;border:1px solid #1a1a30;border-radius:3px;cursor:pointer;padding:1px" onchange="setMat('custom')">
     <div class="ltgrid" style="grid-template-columns:1fr 1fr;margin-top:5px">
-      <button class="ltb on" id="kentog" onclick="toggleKen()">間マーク 表示</button>
-      <button class="ltb" id="winghide" onclick="toggleWingVis()">袖エリア 表示</button>
+      <button class="ltb on" id="kentog" onclick="toggleKen()" data-i18n="">間マーク 表示</button>
+      <button class="ltb" id="winghide" onclick="toggleWingVis()" data-i18n="">袖エリア 表示</button>
     </div>
   </div>
 
   <!-- ホリゾント -->
-  <div class="ph"><span class="ph-l">🎨 ホリゾント背景色</span><button class="ltb" onclick="saveHorzKF()" style="font-size:9px;padding:2px 6px;color:#ffaa33;border-color:#443300" title="現在のホリゾント設定をKFに記録">💾 KF記録</button></div>
+  <div class="ph"><span class="ph-l" data-i18n="">🎨 ホリゾント背景色</span><button class="ltb" onclick="saveHorzKF()" style="font-size:9px;padding:2px 6px;color:#ffaa33;border-color:#443300" title="現在のホリゾント設定をKFに記録" data-i18n="">💾 KF記録</button></div>
   <div class="rs">
     <!-- 地色 -->
     <div class="irow">
@@ -633,12 +636,12 @@ input[type=color].ri{padding:1px;height:22px;cursor:pointer}
     </div>
   </div>
 
-  <div class="ph"><span class="ph-l">🎭 フォーメーション</span></div>
+  <div class="ph"><span class="ph-l" data-i18n="">🎭 フォーメーション</span></div>
   <div class="rs">
     <!-- 一時退場ボタン -->
     <div style="display:flex;gap:3px;margin-bottom:5px">
-      <button class="pb" onclick="exitToWings()" style="flex:1;color:#ffaa33;border-color:#443300;font-size:10px" title="各ダンサーを最寄りの袖に移動（現在時刻にKF追加）">🚪 袖に退場</button>
-      <button class="pb" onclick="exitToBack()"  style="flex:1;color:#aaaaff;border-color:#223366;font-size:10px" title="全員を後方に均等配置（現在時刻にKF追加）">⬆ 後方待機</button>
+      <button class="pb" onclick="exitToWings()" style="flex:1;color:#ffaa33;border-color:#443300;font-size:10px" title="各ダンサーを最寄りの袖に移動（現在時刻にKF追加）" data-i18n="">🚪 袖に退場</button>
+      <button class="pb" onclick="exitToBack()"  style="flex:1;color:#aaaaff;border-color:#223366;font-size:10px" title="全員を後方に均等配置（現在時刻にKF追加）" data-i18n="">⬆ 後方待機</button>
     </div>
     <div style="display:flex;gap:3px;flex-wrap:wrap;margin-bottom:4px">
       <span style="font-size:9px;color:#33335a;width:100%;padding:2px 0">人数を選択：</span>
@@ -656,22 +659,45 @@ input[type=color].ri{padding:1px;height:22px;cursor:pointer}
       <button class="pb" onclick="showFormations(18)" style="flex:1;font-size:11px">18</button>
       <button class="pb" onclick="showFormations(19)" style="flex:1;font-size:11px">19</button>
       <button class="pb" onclick="showFormations(20)" style="flex:1;font-size:11px">20</button>
-      <button class="pb" onclick="showShapeFormations()" style="width:100%;color:#ffaa33;border-color:#443300;margin-top:2px;font-size:11px">⭕🔺 形状（円・三角・2重円…）</button>
+      <button class="pb" onclick="showShapeFormations()" style="width:100%;color:#ffaa33;border-color:#443300;margin-top:2px;font-size:11px" data-i18n="">⭕🔺 形状（円・三角・2重円…）</button>
     </div>
     <div id="formation-list" style="display:none">
       <div id="formation-btns" style="display:flex;flex-direction:column;gap:3px"></div>
     </div>
   </div>
 
-  <div class="ph"><span class="ph-l">📤 ファイル</span></div>
+  <!-- 映像スクリーン -->
+  <div class="ph"><span class="ph-l" data-i18n="">🎬 映像スクリーン</span></div>
+  <div class="rs">
+    <div style="display:flex;gap:4px;align-items:center;margin-bottom:4px">
+      <button class="pb" onclick="document.getElementById('video-input').click()" style="flex:1;font-size:10px" data-i18n="">📂 動画を読込</button>
+      <button class="pb" id="video-toggle" onclick="toggleVideoScreen()" style="flex:1;font-size:10px;color:#33cc88;border-color:#104430" data-i18n="">表示 OFF</button>
+      <input type="file" id="video-input" accept="video/*" style="display:none" onchange="loadVideoFile(this)">
+    </div>
+    <div class="irow" style="padding:0 0 3px">
+      <span style="font-size:9px;color:#7777aa">不透明度</span>
+      <input type="range" id="video-opacity" min="0" max="100" value="90" style="flex:1"
+        oninput="setVideoOpacity(+this.value/100);document.getElementById('video-opv').textContent=this.value+'%'">
+      <span class="ival" id="video-opv">90%</span>
+    </div>
+    <div class="irow" style="padding:0 0 3px">
+      <span style="font-size:9px;color:#7777aa">高さ (m)</span>
+      <input type="range" id="video-height" min="2" max="10" step="0.5" value="6" style="flex:1"
+        oninput="setVideoScreenSize(+this.value);document.getElementById('video-hv').textContent=this.value+'m'">
+      <span class="ival" id="video-hv">6m</span>
+    </div>
+    <div style="font-size:9px;color:#444466;padding:2px 0">ステージ後方スクリーンに投影</div>
+  </div>
+
+  <div class="ph"><span class="ph-l" data-i18n="">📤 ファイル</span></div>
   <div class="rs">
     <div class="pbtns" style="padding:0">
-      <button class="pb" onclick="exportJ()">JSON書出</button>
-      <button class="pb" onclick="importJ()">JSON読込</button>
+      <button class="pb" onclick="exportJ()" data-i18n="">JSON書出</button>
+      <button class="pb" onclick="importJ()" data-i18n="">JSON読込</button>
     </div>
     <div class="pbtns" style="padding:3px 0 0">
-      <button class="pb" onclick="exportKFReport()" style="border-color:#334466;color:#8899cc;font-size:10px">📄 KF一覧PDF</button>
-      <button class="pb" onclick="exportStagePDF()" style="border-color:#334466;color:#8899cc;font-size:10px">📐 立ち位置図面PDF</button>
+      <button class="pb" onclick="exportKFReport()" style="border-color:#334466;color:#8899cc;font-size:10px" data-i18n="">📄 KF一覧PDF</button>
+      <button class="pb" onclick="exportStagePDF()" style="border-color:#334466;color:#8899cc;font-size:10px" data-i18n="">📐 立ち位置図面PDF</button>
     </div>
   </div>
 </div>
@@ -1822,7 +1848,7 @@ function onPD(e){
     lastPt={x:e.clientX,y:e.clientY}; pinchD=0;
     const did=pickDancer(e.clientX,e.clientY);
     if(did){
-      selectDancer(did);
+      selectDancer(did, e.shiftKey||e.metaKey||e.ctrlKey);
       if(stageLocked) enterMoveMode();
       _dragDid=did; _dragMoved=false; isDrag=false;
     } else if(ST.moveMode){
@@ -1831,6 +1857,8 @@ function onPD(e){
       _dragDid=null; isDrag=!stageLocked;
     } else {
       _dragDid=null; isDrag=!stageLocked;
+      // カメラロック中でなければマーキー選択開始
+      if(!stageLocked) startMarquee(e.clientX,e.clientY);
     }
   } else {
     _dragDid=null; isDrag=false; tapT=0;
@@ -1865,10 +1893,16 @@ function onPM(e){
     updCam();
     if(Math.abs(e.clientX-tapX)>8||Math.abs(e.clientY-tapY)>8) tapT=0;
   }
+  // マーキー更新
+  updateMarquee(e.clientX, e.clientY);
   lastPt={x:e.clientX,y:e.clientY};
 }
 function onPU(e){
-  if(_ptrs.size===1&&tapT&&Date.now()-tapT<300){
+  // マーキー確定
+  const wasMarquee=_marqueeActive;
+  endMarquee(e.clientX, e.clientY, e.shiftKey||e.metaKey||e.ctrlKey);
+
+  if(_ptrs.size===1&&tapT&&Date.now()-tapT<300&&!wasMarquee){
     const dx=Math.abs(e.clientX-tapX),dy=Math.abs(e.clientY-tapY);
     if(dx<12&&dy<12&&_dragDid===null&&ST.moveMode){
       const pt=pickFloorPt(tapX,tapY);
@@ -1950,6 +1984,7 @@ function enterMoveMode(){
 function placeDancer(x,z){
   // 複数選択中は全員を相対移動
   if(ST.selIds.length>1){
+    pushUndo();
     // メインダンサーの現在位置を基準にオフセット計算
     const main=ST.dancers.find(d=>d.id===ST.selId); if(!main)return;
     const mp=interpPos(main,ST.t);
@@ -1968,6 +2003,7 @@ function placeDancer(x,z){
     renderTL();renderProps();updDash();
     return;
   }
+  pushUndo();
   const d=ST.dancers.find(d=>d.id===ST.selId);if(!d)return;
   const maxX=ST.showWing?ST.stW/2+WING_W:ST.stW/2;
   x=clamp(x,-maxX,maxX);z=clamp(z,-ST.stD/2,ST.stD/2);
@@ -2045,7 +2081,7 @@ function renderProps(){
   <div style="flex:1"><label class="rl">Z (m)</label><input class="ri" type="number" value="${pos.z.toFixed(2)}" step="0.1" style="-webkit-user-select:text;user-select:text" onchange="setDCoord(${d.id},'z',this.value)"></div>
 </div>
 <div style="margin-top:5px">
-  <button class="pb" style="display:block;text-align:center;padding:5px;font-size:10px" onclick="enterMoveMode()">🎯 タップして移動</button>
+  <button class="pb" style="display:block;text-align:center;padding:5px;font-size:10px" onclick="enterMoveMode()" data-i18n="">🎯 タップして移動</button>
 </div>
 <div style="margin-top:3px;font-size:9px;color:#7777aa">KF: ${d.kfs.length} 個</div>
 </div>`;
@@ -2319,6 +2355,10 @@ function seekTo(t){
   ST.t=clamp(t,0,ST.dur);
   const aud=document.getElementById('aud');
   if(aud.src&&aud.readyState>=1)aud.currentTime=ST.t;
+  // 動画の再生位置も同期
+  if(_videoEl&&_videoVisible){
+    try{ _videoEl.currentTime=ST.t%(_videoEl.duration||9999); }catch(_){}
+  }
   // プレビュー状態とカラーをKFの状態に同期（シーク時）
   LIGHT_IDS.forEach(id=>{
     _ltPreview[id]=getOnAt(LS[id].kfs,ST.t);
@@ -2404,13 +2444,10 @@ function addKF(){
 function delKF(){
   const d=ST.dancers.find(d=>d.id===ST.selId);
   if(!d||d.kfs.length<2){ showMode('⚠ KFが1つ以下のため削除できません'); return; }
-  // 現在時刻に最も近いKFを探す（固定許容ではなく最近傍）
   let best=-1, bestDist=Infinity;
-  d.kfs.forEach((k,i)=>{
-    const dist=Math.abs(k.t-ST.t);
-    if(dist<bestDist){bestDist=dist;best=i;}
-  });
+  d.kfs.forEach((k,i)=>{ const dist=Math.abs(k.t-ST.t); if(dist<bestDist){bestDist=dist;best=i;} });
   if(best<0||bestDist>2){ showMode(`⚠ ${fmt(ST.t)} 付近にKFが見つかりません`); return; }
+  pushUndo();
   const removed=d.kfs[best];
   d.kfs.splice(best,1);
   renderTL(); syncAll();
@@ -2579,6 +2616,7 @@ function delSusKF(l,t){
 // ── 照明KF追加ボタン：現在の全照明ON/OFF状態を記録 ──
 function addLightKF(){
   if(ST.playing) togglePlay();
+  pushUndo();
   const t=Math.round(ST.t*10)/10;
   // プレビュー状態と現在の色をKFとして記録
   LIGHT_IDS.forEach(id=>{
@@ -2711,7 +2749,11 @@ function togglePlay(){
   if(ST.playing){
     if(ST.t>=ST.dur)seekTo(0);
     if(aud.src&&aud.readyState>=2){aud.currentTime=ST.t;aud.play().catch(()=>{});}
-  }else aud.pause();
+    if(_videoEl&&_videoVisible)_videoEl.play().catch(()=>{});
+  }else{
+    aud.pause();
+    if(_videoEl)_videoEl.pause();
+  }
   document.getElementById('plybtn').textContent=ST.playing?'⏸ 停止':'▶ 再生';
 }
 
@@ -3127,7 +3169,7 @@ function loop(ts){
 // ═══════════════════════════════════════════════════
 function injectPropArea(){
   const right=document.getElementById('right');
-  const ph=document.createElement('div');ph.className='ph';ph.innerHTML='<span class="ph-l">📐 選択ダンサー</span>';
+  const ph=document.createElement('div');ph.className='ph';ph.innerHTML='<span class="ph-l" data-i18n="">📐 選択ダンサー</span>';
   const pa=document.createElement('div');pa.id='proparea';
   pa.innerHTML='<div style="font-size:10px;color:#7777aa;padding:5px 8px">ダンサーを選択してください</div>';
   // Insert before stage settings ph
@@ -3365,6 +3407,116 @@ function exitToBack(){
   renderTL();renderLeft();updDash();
   showMode(`⬆ 全員後方待機 @ ${fmt(t)}`);
 }
+// ── 映像スクリーン（VideoTexture）──
+let _videoEl=null, _videoMesh=null, _videoTex=null, _videoVisible=false;
+
+function loadVideoFile(input){
+  const file=input.files[0]; if(!file) return;
+  // 既存ビデオを破棄
+  if(_videoEl){ _videoEl.pause(); _videoEl.src=''; }
+  if(_videoMesh){ sce.remove(_videoMesh); _videoMesh=null; }
+
+  _videoEl=document.createElement('video');
+  _videoEl.loop=true;
+  _videoEl.muted=true; // ミュート（音楽と干渉しないよう）
+  _videoEl.playsInline=true;
+  _videoEl.src=URL.createObjectURL(file);
+  _videoEl.addEventListener('loadeddata',()=>{
+    _videoTex=new THREE.VideoTexture(_videoEl);
+    _videoTex.minFilter=THREE.LinearFilter;
+    _videoTex.magFilter=THREE.LinearFilter;
+    buildVideoMesh();
+    _videoVisible=true;
+    document.getElementById('video-toggle').textContent='表示 ON';
+    document.getElementById('video-toggle').style.color='#ffaa33';
+    _videoEl.play();
+    showMode('🎬 映像スクリーン読込完了');
+  });
+  input.value='';
+}
+
+function buildVideoMesh(){
+  if(_videoMesh){ sce.remove(_videoMesh); _videoMesh=null; }
+  if(!_videoTex||!_videoEl) return;
+  const W=ST.stW;
+  const h=parseFloat(document.getElementById('video-height').value)||6;
+  // アスペクト比を保持
+  const aspect=(_videoEl.videoWidth||16)/(_videoEl.videoHeight||9);
+  const w=Math.min(W*0.95, h*aspect);
+  const geo=new THREE.PlaneGeometry(w,h);
+  const op=parseFloat(document.getElementById('video-opacity').value)/100||0.9;
+  const mat=new THREE.MeshBasicMaterial({
+    map:_videoTex, side:THREE.FrontSide,
+    transparent:true, opacity:op, depthWrite:false
+  });
+  _videoMesh=new THREE.Mesh(geo,mat);
+  // ステージ後方（Z=-D/2）に設置、高さは中心で合わせる
+  _videoMesh.position.set(0, h/2+0.05, -ST.stD/2+0.05);
+  _videoMesh.visible=_videoVisible;
+  sce.add(_videoMesh);
+}
+
+function toggleVideoScreen(){
+  _videoVisible=!_videoVisible;
+  if(_videoMesh) _videoMesh.visible=_videoVisible;
+  const btn=document.getElementById('video-toggle');
+  btn.textContent=_videoVisible?'表示 ON':'表示 OFF';
+  btn.style.color=_videoVisible?'#ffaa33':'#33cc88';
+  btn.style.borderColor=_videoVisible?'#443300':'#104430';
+  if(_videoEl){ _videoVisible?_videoEl.play():_videoEl.pause(); }
+}
+
+function setVideoOpacity(v){
+  if(_videoMesh) _videoMesh.material.opacity=v;
+}
+
+function setVideoScreenSize(h){
+  if(_videoEl&&_videoTex) buildVideoMesh();
+}
+let _marqueeStart=null, _marqueeActive=false;
+
+function worldToScreen(pos3d){
+  const v=new THREE.Vector3(pos3d.x,pos3d.y,pos3d.z);
+  v.project(cam);
+  const rect=document.getElementById('c3').getBoundingClientRect();
+  return {x:(v.x+1)/2*rect.width+rect.left, y:(-v.y+1)/2*rect.height+rect.top};
+}
+function startMarquee(cx,cy){ _marqueeStart={x:cx,y:cy}; _marqueeActive=false; }
+function updateMarquee(cx,cy){
+  if(!_marqueeStart)return;
+  if(!_marqueeActive&&Math.hypot(cx-_marqueeStart.x,cy-_marqueeStart.y)>8)_marqueeActive=true;
+  if(!_marqueeActive)return;
+  const m=document.getElementById('marquee');
+  const vpRect=document.getElementById('vp').getBoundingClientRect();
+  m.style.display='block';
+  m.style.left=Math.min(_marqueeStart.x,cx)-vpRect.left+'px';
+  m.style.top=Math.min(_marqueeStart.y,cy)-vpRect.top+'px';
+  m.style.width=Math.abs(cx-_marqueeStart.x)+'px';
+  m.style.height=Math.abs(cy-_marqueeStart.y)+'px';
+}
+function endMarquee(cx,cy,addToSel){
+  const m=document.getElementById('marquee'); m.style.display='none';
+  if(!_marqueeStart||!_marqueeActive){_marqueeStart=null;return false;}
+  const x1=Math.min(_marqueeStart.x,cx), x2=Math.max(_marqueeStart.x,cx);
+  const y1=Math.min(_marqueeStart.y,cy), y2=Math.max(_marqueeStart.y,cy);
+  const selected=[];
+  ST.dancers.forEach(d=>{
+    const mesh=dMesh[d.id];if(!mesh)return;
+    const s=worldToScreen({x:mesh.position.x,y:mesh.position.y,z:mesh.position.z});
+    if(s.x>=x1&&s.x<=x2&&s.y>=y1&&s.y<=y2)selected.push(d.id);
+  });
+  if(selected.length>0){
+    if(addToSel){ selected.forEach(id=>{if(!ST.selIds.includes(id))ST.selIds.push(id);}); }
+    else { ST.selIds=[...selected]; }
+    ST.selId=ST.selIds[ST.selIds.length-1]||null;
+    document.querySelectorAll('.di').forEach(el=>el.classList.toggle('sel',ST.selIds.map(String).includes(el.dataset.did)));
+    ST.dancers.forEach(syncDancer); renderProps();renderTL();updDash();
+    showMode(`📦 ${selected.length}人を選択（合計${ST.selIds.length}人）`);
+  }
+  _marqueeStart=null;_marqueeActive=false;
+  return _marqueeActive||selected.length>0;
+}
+
 const _undoHistory=[];
 const UNDO_MAX=30;
 function pushUndo(){ _undoHistory.push(JSON.stringify(getWD())); if(_undoHistory.length>UNDO_MAX)_undoHistory.shift(); }
@@ -3527,6 +3679,7 @@ function nearestMatch(dancers, positions){
 }
 
 function applyFormation(n,f){
+  pushUndo();
   if(!confirm(`「${f.name}」（${n}人）を t=${fmt(ST.t)} に適用しますか？\n(ダンサーが足りない場合は自動追加)\n最近傍マッチングで移動距離を最小化します`)) return;
   const t=ST.t;
   while(ST.dancers.length<n){const d=mkDancerData();ST.dancers.push(d);mkDancerMesh(d);}
@@ -3765,6 +3918,168 @@ renderLeft();renderProps();renderWorkList();renderTL();updDash();syncAllLights()
 setView('front');
 setTimeout(()=>{ resize(); updCam(); syncAll(); }, 100);
 setTimeout(()=>{ resize(); updCam(); }, 500);
+const I18N_EN = {
+  '▶ 再生': 'Play ▶',
+  '⏸ 停止': '⏸ Pause',
+  '◆ KF追加': '◆ Add KF',
+  '📌 固定': '📌 Hold',
+  '削除': 'Delete',
+  '⧉ コピー': '⧉ Copy',
+  '⧉ 貼付': '⧉ Paste',
+  '🗑 位置リセット': '🗑 Reset Pos',
+  '🗑 照明リセット': '🗑 Reset Lights',
+  '💡 今の状態を記録': '💡 Record State',
+  '💡 コピー': '💡 Copy',
+  '💡 貼付': '💡 Paste',
+  '⚫ 記録OFF': '⚫ Rec OFF',
+  '🔴 記録中': '🔴 Recording',
+  '⚠ KFリセット': '⚠ Reset KF',
+  '⬛ 全灯ON': '⬛ All ON',
+  '⬛ 全灯OFF': '⬛ All OFF',
+  '⚡ ストロボ': '⚡ Strobe',
+  '⚡ 停止': '⚡ Stop',
+  '🚪 袖に退場': '🚪 Exit Wings',
+  '⬆ 後方待機': '⬆ To Upstage',
+  '💾 KF記録': '💾 Save KF',
+  '全員選択': 'Select All',
+  '保存': 'Save',
+  '読込': 'Load',
+  'JSON書出': 'Export JSON',
+  'JSON読込': 'Import JSON',
+  '📄 KF一覧PDF': '📄 KF List PDF',
+  '📐 立ち位置図面PDF': '📐 Position PDF',
+  '🆕 新規': '🆕 New',
+  '☀ 明': '☀ Bright',
+  '💡 作業灯': '💡 Work Light',
+  '正面': 'Front',
+  '真上': 'Top',
+  '側面': 'Side',
+  '🔓 固定': '🔓 Lock',
+  '🔒 固定中': '🔒 Locked',
+  '位置': 'Position',
+  '照明': 'Lighting',
+  '尺': 'Dur',
+  '秒': 's',
+  '行': 'Row',
+  '列': 'Col',
+  'イン': 'In',
+  'アウト': 'Out',
+  '強さ': 'Intensity',
+  'フェード': 'Fade',
+  '地色': 'Base Color',
+  '上手': 'Stage Right',
+  '下手': 'Stage Left',
+  '中央': 'Center',
+  '前': 'Front',
+  '奥': 'Back',
+  '表示': 'Show',
+  'なし': 'None',
+  'カスタム': 'Custom',
+  'コンクリ': 'Concrete',
+  '木目': 'Wood',
+  '大理石': 'Marble',
+  '近未来': 'Sci-Fi',
+  '幅 (m)': 'Width (m)',
+  '奥行 (m)': 'Depth (m)',
+  '高さ': 'Height',
+  '床材': 'Floor',
+  '間マーク 表示': 'Ken Mark',
+  '袖エリア 表示': 'Wing Area',
+  'サス': 'Sus',
+  '選択': 'Select',
+  '時刻': 'Time',
+  '操作中': 'Active',
+  '未選択': 'None',
+  '色 A': 'Color A',
+  '色 B': 'Color B',
+  '人数を選択：': 'Select Count:',
+  '📁 プロジェクト': '📁 Project',
+  '🧑 ダンサー': '🧑 Dancer',
+  '🎬 ステージ': '🎬 Stage',
+  '📊 状態': '📊 Status',
+  '📤 ファイル': '📤 Files',
+  '🎭 フォーメーション': '🎭 Formations',
+  '🎭 袖（待機スペース）': '🎭 Wings (Wait)',
+  '💡 頭上サス': '💡 Top Sus',
+  '💡 ラインサス': '💡 Line Sus',
+  '🔦 バックサス A — パラレル': '🔦 Back Sus A — Parallel',
+  '🔦 バックサス B — クロス': '🔦 Back Sus B — Cross',
+  '🔦 バックサス 上手/下手': '🔦 Back Sus SR/SL',
+  '🎯 フロント照明': '🎯 Front Lights',
+  '🔆 SS照明（袖→ステージ）': '🔆 Side Lights',
+  '💥 バックフット（目潰し）': '💥 Back Foot (Blinder)',
+  '🎨 ホリゾント背景色': '🎨 Cyclorama',
+  'A 上手': 'A SR',
+  'A 下手': 'A SL',
+  'B 上手': 'B SR',
+  'B 下手': 'B SL',
+  '上段 OFF': 'High OFF',
+  '下段 OFF': 'Low OFF',
+  '一幕 — 上手（ステージから向かって右）': 'Act1 — Stage Right',
+  '一幕 — 下手（ステージから向かって左）': 'Act1 — Stage Left',
+  '二幕 — 上手': 'Act2 — Stage Right',
+  '二幕 — 下手': 'Act2 — Stage Left',
+  'ダンサー立ち位置': 'Dancer Position',
+  'バックサスA専用': 'Back Sus A only',
+  'バックサスB専用': 'Back Sus B only',
+  '客席上方からステージを照らす': 'From above audience',
+  '後方床置き → 客席方向へ照射': 'Floor back → audience',
+  '6灯 後方天井バー → ステージ前方へ平行照射': '6 lights, parallel from upstage bar',
+  '6灯 X字交差 — 2色目に最適': '6 lights, X-cross — great for 2nd color',
+  'すべてOFF': 'All OFF',
+  'プロジェクト:': 'Project:',
+  '保存データなし': 'No saves',
+  'ステージ or 袖をタップして移動': 'Tap stage or wing to move',
+  '🎯 タップして移動': '🎯 Tap to Move',
+  '音楽ファイルを選択してください': 'Select audio file',
+  'ホリゾントの地色': 'Cyclorama base color',
+  '🔦 アッパー（上から）': '🔦 Upper Light',
+  '🔦 ダウン（下から）': '🔦 Down Light',
+  '袖待機中': 'In Wings',
+  '💡 ブラウザの 印刷 (⌘P / Ctrl+P) → 「PDFに保存」でPDFになります': '💡 Print (⌘P / Ctrl+P) → Save as PDF',
+  '💡 ブラウザの 印刷 (⌘P / Ctrl+P) → 「PDFに保存」でPDFになります。A4横向きを推奨。': '💡 Print (⌘P / Ctrl+P) → Save as PDF (landscape recommended)',
+  '📋 KF一覧レポート': '📋 KF Report',
+  '📐 KF立ち位置図面': '📐 Position Diagram',
+  '⭕🔺 形状（円・三角・2重円…）': '⭕🔺 Shapes (Circle, Triangle…)',
+  'キャンセル': 'Cancel',
+  '💾 保存方法を選択': '💾 Choose Save Method',
+  '🖥 ブラウザ内に保存': '🖥 Save in Browser',
+  '📄 JSONファイルに書き出す': '📄 Export as JSON',
+  'このブラウザのみ。消去・キャッシュ削除で消える場合あり。': 'Browser only. May be lost on cache clear.',
+  'ダウンロードフォルダに保存。バックアップ・共有・別端末での読込可。': 'Saved to Downloads. Can be shared or used on another device.',
+  'ダンサーを選択してください': 'Select a dancer',
+  '人をドラッグして移動　空きエリアドラッグで回転　ピンチでズーム': 'Drag dancer to move  Drag empty area to rotate  Pinch to zoom',
+  '照明ON': 'Light ON',
+  '／ 作品:': '/ Work:',
+  '📐 選択ダンサー': '📐 Selected',
+};
+
+let _lang = 'JP';
+
+function setLang(lang) {
+  _lang = lang;
+  const btn = document.getElementById('lang-btn');
+  if(btn) btn.textContent = lang === 'EN' ? '🌐 JP' : '🌐 EN';
+
+  // [data-i18n] 属性を持つ要素を翻訳
+  // 初回EN切替時に元のJPテキストをdata-jp属性に退避
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    if(!el.dataset.jp) el.dataset.jp = el.textContent.trim();
+    if(!el.dataset.en) {
+      const enText = I18N_EN[el.dataset.jp];
+      if(enText) el.dataset.en = enText;
+    }
+    if(lang === 'EN' && el.dataset.en) el.textContent = el.dataset.en;
+    else if(el.dataset.jp) el.textContent = el.dataset.jp;
+  });
+
+  showMode(lang === 'EN' ? '🌐 Switched to English' : '🌐 日本語に切り替えました');
+}
+
+function T(jp) {
+  return (_lang === 'EN' && I18N_EN[jp]) ? I18N_EN[jp] : jp;
+}
+
 requestAnimationFrame(loop);
 
 // ── PWA Service Worker（オフライン対応）──
